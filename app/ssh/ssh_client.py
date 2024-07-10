@@ -15,7 +15,7 @@ class ComunicationSSH:
         return ssh
     
     
-    def backup(self,disp: str):
+    def backup(self,ip:str,port:int,user:str,password:str,name_disp: str):
         ruta = askdirectory()
         if not ruta:
             print("No se seleccionó ninguna ruta.")
@@ -23,9 +23,9 @@ class ComunicationSSH:
 
         try:
             
-            ssh = self.create_ssh_client("10.104.0.4", 23, 'ubnt', "628819872")
+            ssh = self.create_ssh_client(ip,port,user,password)
 
-            local_path = os.path.join(ruta, disp.replace(" ", "") + ".cfg")
+            local_path = os.path.join(ruta, name_disp.replace(" ", "") + ".cfg")
             
             # Usar SCP para copiar el archivo desde el servidor remoto
             with SCPClient(ssh.get_transport()) as scp:
