@@ -3,3 +3,4 @@ ping3==4.0.8           # Biblioteca para ICMP (puedes usar scapy para ICMP)
 ttkbootstrap==1.10.1     # Biblioteca para la interfaz gráfica
 SQLAlchemy==2.0.31      # ORM para SQLite
 python-dotenv==1.0.1 
+scp==0.15.0
