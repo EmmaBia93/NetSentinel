@@ -1,19 +1,14 @@
 from database.models import init_db, Devices
-
-
+from dotenv import load_dotenv
+import os
 def main():
     
     Session = init_db()
     session = Session()
 
+    load_dotenv()
+    print(os.getenv("PASS_AC"))
 
-
-    if not session.query(Devices).first():  # Verifica si la tabla 'devices' está vacía
-        session.add_all([
-            Devices(nombre='Panel1', ip='192.168.1.1', localidad='Media Agua', frecuencia='5GHz', tecnologia='AC', tipo='panel'),
-            Devices(nombre='Enlace1', ip='192.168.1.2', localidad='Media Agua', frecuencia='5GHz', tecnologia='AirMax', tipo='enlace')
-        ])
-        session.commit()
 
 
 
