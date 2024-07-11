@@ -4,16 +4,24 @@ from sqlalchemy.orm import sessionmaker
 
 Base = declarative_base()
 
-class Devices(Base):
-    __tablename__ = 'device'
+class Panel(Base):
+    __tablename__ = 'paneles'
     id = Column(Integer, primary_key=True,autoincrement=True)
     nombre = Column(String, nullable=False, unique=True)
     ip = Column(String, nullable=False, unique=True)
     localidad = Column(String,nullable=False)
     frecuencia = Column(String,nullable=True)
     tecnologia = Column(String, nullable=False)
-    tipo = Column(String, nullable=False)
-
+   
+class Enlace(Base):
+    __tablename__ = 'enlaces'
+    id = Column(Integer, primary_key=True,autoincrement=True)
+    nombre = Column(String, nullable=False, unique=True)
+    ip = Column(String, nullable=False, unique=True)
+    localidad = Column(String,nullable=False)
+    frecuencia = Column(String,nullable=True)
+    tecnologia = Column(String, nullable=False)
+   
 
 def init_db():
     engine = create_engine('sqlite:///app/database/database.db')

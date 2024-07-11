@@ -5,7 +5,7 @@ from scp import SCPClient
 import concurrent.futures
 import threading
 from tkinter.filedialog import askdirectory
-
+from ssh.tools_aux import cantidad_horas_activo
 
 class ComunicationSSH:
     
@@ -77,7 +77,7 @@ class ComunicationSSH:
             return False
         
         
-    def info_device(self, ip: str, port: int, username: str, get_pass: str, name_device: str):
+    def info_device(self,ip: str, port: int, username: str, get_pass: str, name_device: str):
         """
         Retrieves information from the specified device via SSH and updates the list with the results.
 
@@ -92,9 +92,11 @@ class ComunicationSSH:
         
         client = None
         try:
-            client = self.create_ssh_client(ip=ip, port=port, username=username, password=get_pass)
+            
+            client =self.create_ssh_client(ip=ip, port=port, username=username, password=get_pass)
+           
             if client:
-                stdin, stdout, stderr = client.exec_command(command=command, timeout=3, auth_timeout=4)
+                stdin, stdout, stderr = client.exec_command(command=command, timeout=3)
                 
                 output = stdout.read().decode().strip()
                 error = stderr.read().decode().strip()
@@ -123,34 +125,37 @@ class ComunicationSSH:
                 client.close()
 
 
-
-def inicializacion_ssh(self, ips: list, password: str, username: str) -> dict:
-    def connection_wrapper(ip_info):
-        return self.connection_info(ip_info[0], ip_info[1], password, username, 23)
-    
-    results = {}
-    
-    with concurrent.futures.ThreadPoolExecutor(max_workers=len(ips)) as executor:
-        future_to_ip = {executor.submit(connection_wrapper, ip): ip for ip in ips}
+    def inicializacion_ssh(self, ips: list, password: str, username: str) -> dict:
+       
+       
+         
+       
+        def connection_wrapper(ip_info):
+            return self.info_device(ip_info[0],23, username, password, ip_info[1])
         
-        for future in concurrent.futures.as_completed(future_to_ip):
-            ip = future_to_ip[future]
-            try:
-                data = future.result()
-                split_text = data.split(",")
-                client_count, uptime, speed, ip, name = split_text[0], int(split_text[1]), split_text[2], split_text[3], split_text[4]
-                
-                results[name] = {
-                    "clientes": client_count,
-                    "ip": ip,
-                    "tiempo": self.cantidad_horas_activo(uptime),
-                    "velocidad": speed
-                }
-            except Exception as exc:
-                print(f'Error processing {ip}: {exc}')
-    
-    return results
+        results = {}
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(ips)) as executor:
+            future_to_ip = {executor.submit(connection_wrapper, ip): ip for ip in ips}
             
+            for future in concurrent.futures.as_completed(future_to_ip):
+                ip = future_to_ip[future]
+                try:
+                    data = future.result()
+                    split_text = data.split(",")
+                    client_count, uptime, speed, ip, name = split_text[0], int(split_text[1]), split_text[2], split_text[3], split_text[4]
+                    
+                    results[name] = {
+                        "clientes": client_count,
+                        "ip": ip,
+                        "tiempo": cantidad_horas_activo(uptime),
+                        "velocidad": speed
+                    }
+                except Exception as exc:
+                    print(f'Error processing {ip}: {exc}')
+        
+        return results
+                
             
             
  
