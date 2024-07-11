@@ -2,6 +2,8 @@ import threading as th
 import paramiko
 import os
 from scp import SCPClient
+import concurrent.futures
+import threading
 from tkinter.filedialog import askdirectory
 
 
@@ -120,7 +122,34 @@ class ComunicationSSH:
             if client:
                 client.close()
 
+
+
+def inicializacion_ssh(self, ips: list, password: str, username: str) -> dict:
+    def connection_wrapper(ip_info):
+        return self.connection_info(ip_info[0], ip_info[1], password, username, 23)
+    
+    results = {}
+    
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(ips)) as executor:
+        future_to_ip = {executor.submit(connection_wrapper, ip): ip for ip in ips}
         
+        for future in concurrent.futures.as_completed(future_to_ip):
+            ip = future_to_ip[future]
+            try:
+                data = future.result()
+                split_text = data.split(",")
+                client_count, uptime, speed, ip, name = split_text[0], int(split_text[1]), split_text[2], split_text[3], split_text[4]
+                
+                results[name] = {
+                    "clientes": client_count,
+                    "ip": ip,
+                    "tiempo": self.cantidad_horas_activo(uptime),
+                    "velocidad": speed
+                }
+            except Exception as exc:
+                print(f'Error processing {ip}: {exc}')
+    
+    return results
             
             
             

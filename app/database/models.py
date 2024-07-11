@@ -6,7 +6,7 @@ Base = declarative_base()
 
 class Devices(Base):
     __tablename__ = 'device'
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True,autoincrement=True)
     nombre = Column(String, nullable=False, unique=True)
     ip = Column(String, nullable=False, unique=True)
     localidad = Column(String,nullable=False)
