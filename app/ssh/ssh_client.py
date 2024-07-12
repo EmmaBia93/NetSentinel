@@ -119,6 +119,18 @@ class ComunicationSSH:
 
 
     def inicializacion_ssh(self,ips: list) -> dict:
+        """
+        La funcion recibe como parametro una lista de lista, la cual esta compuesta por:
+        Nombre: El nombre del dispositivo.
+        IP: Direccion del dispositivo.
+        Tecnologia: Ya sea AC, M2 o M5.
+        Se debe respetar ese orden al momento de armar la lista.
+
+        Retorna: Un diccionario con la siguiente estructura:
+
+        Nombre:{ "clientes": client_count,"ip": ip,"tiempo": cantidad_horas_activo,"velocidad": speed }
+        
+        """
         load_dotenv()
         def connection_wrapper(name,ip,tecno):
             
