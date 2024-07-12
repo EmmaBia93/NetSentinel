@@ -9,10 +9,7 @@ from ssh.tools_aux import cantidad_horas_activo
 
 class ComunicationSSH:
     
-    def __init__(self) -> None:
-        self.lista=[]
-    
-    
+        
     def create_ssh_client(self,ip, port, username, password):
         ssh = paramiko.SSHClient()
         ssh.load_system_host_keys()
@@ -78,16 +75,7 @@ class ComunicationSSH:
         
         
     def info_device(self,ip: str, port: int, username: str, get_pass: str, name_device: str):
-        """
-        Retrieves information from the specified device via SSH and updates the list with the results.
-
-        Args:
-            ip (str): The IP address of the target device.
-            port (int): The SSH port number.
-            username (str): The SSH username.
-            get_pass (str): The SSH password.
-            name_device (str): The name of the device.
-        """
+        
         command = "(((wstalist -p | grep -c \"mac\" ; mca-status | grep uptime | cut -c8- ; mca-status | grep lanSpeed | cut -c10-) | xargs echo -n) | tr \" \" \",\")"
         
         client = None
@@ -107,11 +95,12 @@ class ComunicationSSH:
                 if code_status == 0:
                     results = output.split(",")
                     if len(results) == 3:
-                        self.lista.append(f"{output},{ip},{name_device}")
+                        
+                        return(f"{output},{ip},{name_device}")
                     else:
-                        self.lista.append(f"{output},0,{ip},{name_device}")
+                        return (f"{output},0,{ip},{name_device}")
                 else:
-                    self.lista.append(f"{error},0,{ip},{name_device}")
+                    return (f"{error},0,{ip},{name_device}")
                     
         except TimeoutError as e:
             print(f"SSH connection timeout error: {e}")
@@ -125,24 +114,22 @@ class ComunicationSSH:
                 client.close()
 
 
-    def inicializacion_ssh(self, ips: list, password: str, username: str) -> dict:
+    def inicializacion_ssh(self,ips: dict, password: str, username: str) -> dict:
        
-       
-         
-       
-        def connection_wrapper(ip_info):
-            return self.info_device(ip_info[0],23, username, password, ip_info[1])
+        def connection_wrapper(name,ip):
+            return self.info_device(ip,23, username, password, name)
         
         results = {}
         
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(ips)) as executor:
-            future_to_ip = {executor.submit(connection_wrapper, ip): ip for ip in ips}
+            future_to_ip = {executor.submit(connection_wrapper, name,ip): (name,ip) for name,ip in ips.items()}
             
             for future in concurrent.futures.as_completed(future_to_ip):
                 ip = future_to_ip[future]
                 try:
                     data = future.result()
                     split_text = data.split(",")
+                   
                     client_count, uptime, speed, ip, name = split_text[0], int(split_text[1]), split_text[2], split_text[3], split_text[4]
                     
                     results[name] = {
