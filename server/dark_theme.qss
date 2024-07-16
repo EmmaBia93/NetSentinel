@@ -8,6 +8,12 @@ QWidget {
     font-size: 15px;
 }
 
+
+QLabel {
+    color:#bd93f9
+}
+
+
 /* QPushButton settings */
 QPushButton {
     background-color: #44475a;
@@ -17,6 +23,9 @@ QPushButton {
     padding: 10px;
     font-size: 20px;
 }
+
+
+
 
 QPushButton:hover {
     background-color: #6272a4;

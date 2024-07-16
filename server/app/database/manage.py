@@ -36,3 +36,30 @@ def delete_device(nombre):
         session.commit()
         return True
     return False
+
+def update_panel(ip,nuevo_nombre=None, nueva_frecuencia=None, nueva_tecnologia=None):
+    try:
+        # Buscar el registro por IP
+        panel = session.query(Panel).filter_by(ip=ip).first()
+        
+        # Si el registro no existe, retornar un mensaje
+        if not panel:
+            return False
+        
+        # Actualizar los campos si se proporcionaron nuevos valores
+        if nuevo_nombre:
+            panel.nombre = nuevo_nombre
+        if nueva_frecuencia:
+            panel.frecuencia = nueva_frecuencia
+        if nueva_tecnologia:
+            panel.tecnologia = nueva_tecnologia
+        
+        # Guardar los cambios en la base de datos
+        session.commit()
+        return True
+    except Exception as e:
+        # En caso de error, deshacer los cambios
+        session.rollback()
+        return False
+    finally:
+        session.close()

@@ -1,12 +1,13 @@
 import sys
-from PySide6.QtWidgets import QApplication,QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QFrame, QCheckBox
+from PySide6.QtWidgets import QApplication,QDialog,QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QFrame, QCheckBox
 from PySide6.QtCore import QFile, QTextStream, Qt
 from PySide6.QtGui import QColor,QIcon
 import threading
-from database.manage import get_paneles
+from database.manage import get_paneles,update_panel
 from icmp.icmp_client import is_device_online
-from ssh.ssh_client import ComunicationSSH
+from  ssh.ssh_client import ComunicationSSH
 from toggle.toogle_switch import Toggle
+from gui.edit_windows import EditWindow
 
 
 class MainWindow(QMainWindow):
@@ -14,7 +15,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Gestión de Paneles")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 1000, 700)
         self.showMaximized()  # Iniciar en pantalla completa
 
         # Widget central
@@ -59,15 +60,25 @@ class MainWindow(QMainWindow):
         for label in button_labels:
             btn = QPushButton(label)
             buttons_layout.addWidget(btn)
+            if label == "Editar":
+                btn.clicked.connect(self.edit_selected_row)
         
         right_layout.addWidget(buttons_frame)
         
         # Tabla de paneles
         self.table = QTableWidget()
-        self.table.setColumnCount(7)
-        self.table.setHorizontalHeaderLabels(["Nombre", "IP", "Horas Activo", "Total Clientes", "Velocidad", "Frecuencia", "Online"])
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.setColumnCount(8)
+        self.table.setHorizontalHeaderLabels(["Nombre", "IP", "Tiempo", "C", "Velocidad", "Hz","Tec","Live?"])
+        self.table.horizontalHeader().setSectionResizeMode(7,QHeaderView.Stretch)
+        self.table.setColumnWidth(0, 250)
+        self.table.setColumnWidth(1, 130)
+        self.table.setColumnWidth(2, 180)
+        self.table.setColumnWidth(3, 20)
+        self.table.setColumnWidth(4, 150)
+        self.table.setColumnWidth(6, 100)
 
+      
+        
        
 
         # Hacer las filas seleccionables pero no editables
@@ -123,6 +134,7 @@ class MainWindow(QMainWindow):
             name = device.nombre
             ip = device.ip
             frec = device.frecuencia
+            tec = device.tecnologia
             data = ssh_data.get(name, {})
             online = online_status.get(ip, False)
 
@@ -132,7 +144,9 @@ class MainWindow(QMainWindow):
             self.set_table_item(row, 3, str(data.get("clientes", "-")))
             self.set_table_item(row, 4, data.get("velocidad", "-"))
             self.set_table_item(row, 5, frec)
-            self.set_table_item(row, 6, "Online" if online else "Offline")
+            self.set_table_item(row, 6, tec)
+            self.set_table_item(row, 7, "Online" if online else "Offline")
+            
 
            
 
@@ -142,5 +156,26 @@ class MainWindow(QMainWindow):
         item.setFlags(item.flags() & ~Qt.ItemIsEditable)
         self.table.setItem(row, column, item)
         
+
+    def edit_selected_row(self):
+        selected_row = self.table.currentRow()
+        if selected_row < 0:
+            return
+
+        data = [
+            self.table.item(selected_row, col).text() if self.table.item(selected_row, col) is not None else "" 
+            for col in range(self.table.columnCount())
+        ]
+
+        edit_dialog = EditWindow(self)
+        edit_dialog.set_data(data)
+        
+        if edit_dialog.exec_() == QDialog.Accepted:
+            new_data = edit_dialog.get_data()
+            for col in range(len(new_data)):
+                self.set_table_item(selected_row, col, new_data[col])
+
+            print(update_panel(new_data[1],new_data[0],new_data[5],new_data[6]))
+
         
     
