@@ -1,5 +1,5 @@
 import sys
-from PySide6.QtWidgets import QApplication,QDialog,QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QFrame, QCheckBox
+from PySide6.QtWidgets import QApplication,QDialog,QMainWindow, QWidget,QMessageBox, QVBoxLayout, QHBoxLayout, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QFrame, QCheckBox
 from PySide6.QtCore import QFile, QTextStream, Qt
 from PySide6.QtGui import QColor,QIcon
 import threading
@@ -8,6 +8,7 @@ from icmp.icmp_client import is_device_online
 from  ssh.ssh_client import ComunicationSSH
 from toggle.toogle_switch import Toggle
 from gui.edit_windows import EditWindow
+from gui.delete_windows import DeletePanelDialog
 
 
 class MainWindow(QMainWindow):
@@ -55,13 +56,20 @@ class MainWindow(QMainWindow):
         buttons_frame = QFrame()
         buttons_frame.setFrameShape(QFrame.StyledPanel)
         buttons_layout = QHBoxLayout(buttons_frame)
+        btn_funcion = {"Editar":self.edit_selected_row,
+                       "Borrar":self.borrar_device,
+                       "Nuevo Enlace":self.new_enlace,
+                       "Nuevo Panel":self.new_panel,
+                       "Backup":self.create_backup,
+                       "Reinicio":self.reboot
+                       }
+        
 
         button_labels = ["Editar", "Borrar", "Nuevo Enlace", "Nuevo Panel", "Backup", "Reinicio"]
         for label in button_labels:
             btn = QPushButton(label)
             buttons_layout.addWidget(btn)
-            if label == "Editar":
-                btn.clicked.connect(self.edit_selected_row)
+            btn.clicked.connect(btn_funcion[label])
         
         right_layout.addWidget(buttons_frame)
         
@@ -175,7 +183,35 @@ class MainWindow(QMainWindow):
             for col in range(len(new_data)):
                 self.set_table_item(selected_row, col, new_data[col])
 
-            print(update_panel(new_data[1],new_data[0],new_data[5],new_data[6]))
+            
 
         
     
+    def borrar_device(self):
+        selected_row = self.table.currentRow()
+        if selected_row < 0:
+            return
+
+        data = [
+            self.table.item(selected_row, col).text() if self.table.item(selected_row, col) is not None else "" 
+            for col in range(self.table.columnCount())
+        ]
+
+        dialog = DeletePanelDialog(self)
+        dialog.set_data(data)
+        
+        if dialog.exec():
+            self.table.removeRow(selected_row)
+            QMessageBox.information(self, "Operación Exitosa", "El panel fue eliminado.")
+        else:
+            QMessageBox.information(self, "Operación Cancelada", "El panel no fue eliminado.")
+
+
+    def new_enlace(self):
+        print("soy nuevo enlace")
+    def new_panel(self):
+        print("soy nuevo panel")
+    def create_backup(self):
+        print("soy backup")
+    def reboot(self):
+        print("soy reinicio")
