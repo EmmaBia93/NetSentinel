@@ -7,14 +7,25 @@ class EditWindow(QDialog):
     def __init__(self, parent=None):
         super(EditWindow, self).__init__(parent)
         self.setWindowTitle("Editar Panel")
+        self.setFixedSize(400, 600)
         self.data=[]
         layout = QVBoxLayout(self)
-
+        layout.setContentsMargins(10, 10, 10, 10)  # Establecer márgenes
+        layout.setSpacing(20) 
+        
         # Campos de edición
         self.name_edit = QLineEdit()
+        self.name_edit.setFixedHeight(50)
+        self.name_edit.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.ip_edit = QLineEdit()
+        self.ip_edit.setFixedHeight(50)
+        self.ip_edit.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.freq_edit = QLineEdit()
+        self.freq_edit.setFixedHeight(50)
+        self.freq_edit.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.tecno_edit = QLineEdit()
+        self.tecno_edit.setFixedHeight(50)
+        self.tecno_edit.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
 
         layout.addWidget(QLabel("Nombre:",alignment=QtCore.Qt.AlignmentFlag.AlignCenter))

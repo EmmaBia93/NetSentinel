@@ -5,7 +5,7 @@ from PySide6 import QtCore
 class DeletePanelDialog(QDialog):
     def __init__(self, parent=None):
         super(DeletePanelDialog, self).__init__(parent)
-       
+        self.setFixedSize(500, 400)
         
 
 
@@ -17,7 +17,9 @@ class DeletePanelDialog(QDialog):
         self.setWindowTitle("Confirmar Eliminación")
 
         layout = QVBoxLayout()
-
+        
+        layout.setContentsMargins(10, 10, 10, 10)  # Establecer márgenes
+        layout.setSpacing(20) 
         # Mostrar la información del panel
         info_label = QLabel(f"Está a punto de eliminar el panel:\n\nNombre: {self.panel[0]}\nIP: {self.panel[1]}\n\nEscriba 'sudo_delete' para continuar.",alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
         

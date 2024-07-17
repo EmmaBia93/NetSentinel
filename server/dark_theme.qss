@@ -12,8 +12,13 @@ QWidget {
 QLabel {
     color:#bd93f9
 }
-
-
+QComboBox {
+    color:#bd93f9;
+    background-color: #282a36
+}
+QComboBox::placeholder{
+    color:#bd93f9;
+}
 /* QPushButton settings */
 QPushButton {
     background-color: #44475a;

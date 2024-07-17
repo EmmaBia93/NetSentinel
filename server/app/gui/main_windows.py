@@ -3,12 +3,13 @@ from PySide6.QtWidgets import QApplication,QDialog,QMainWindow, QWidget,QMessage
 from PySide6.QtCore import QFile, QTextStream, Qt
 from PySide6.QtGui import QColor,QIcon
 import threading
-from database.manage import get_paneles,update_panel
+from database.manage import get_paneles,update_panel,create_panel,delete_panel,get_enlaces
 from icmp.icmp_client import is_device_online
 from  ssh.ssh_client import ComunicationSSH
 from toggle.toogle_switch import Toggle
 from gui.edit_windows import EditWindow
 from gui.delete_windows import DeletePanelDialog
+from gui.new_panel import NewPanelWindows
 
 
 class MainWindow(QMainWindow):
@@ -35,7 +36,7 @@ class MainWindow(QMainWindow):
         
         menu_layout.addWidget(self.ssh_switch,Qt.AlignCenter,Qt.AlignHCenter)
         
-        localidades = ["Media Agua", "Los Berros", "Colonia", "Cochagual", "Carpinteria","Cañada", "Tres Esquinas"]
+        localidades = ["Media Agua", "Los Berros", "Colonia", "Cochagual", "Carpinteria","Cañada", "Tres Esquinas","Enlaces"]
         for localidad in localidades:
             btn = QPushButton(localidad)
             btn.setFixedHeight(60)  # Hacer los botones más grandes
@@ -76,14 +77,14 @@ class MainWindow(QMainWindow):
         # Tabla de paneles
         self.table = QTableWidget()
         self.table.setColumnCount(8)
-        self.table.setHorizontalHeaderLabels(["Nombre", "IP", "Tiempo", "C", "Velocidad", "Hz","Tec","Live?"])
+        self.table.setHorizontalHeaderLabels(["Nombre", "IP", "Tiempo", "Clientes", "Velocidad", "Frecuencia","Tec","Live?"])
         self.table.horizontalHeader().setSectionResizeMode(7,QHeaderView.Stretch)
-        self.table.setColumnWidth(0, 250)
-        self.table.setColumnWidth(1, 130)
-        self.table.setColumnWidth(2, 180)
-        self.table.setColumnWidth(3, 20)
-        self.table.setColumnWidth(4, 150)
-        self.table.setColumnWidth(6, 100)
+        self.table.setColumnWidth(0, 300)
+        self.table.setColumnWidth(1, 200)
+        self.table.setColumnWidth(2, 200)
+        self.table.setColumnWidth(3, 150)
+        self.table.setColumnWidth(4, 200)
+        self.table.setColumnWidth(5, 200)
 
       
         
@@ -114,10 +115,14 @@ class MainWindow(QMainWindow):
 
 
     def load_data(self, localidad):
-        # Aquí se debe implementar la lógica para cargar los datos desde la base de datos
-        devices = get_paneles(localidad)
+        if localidad!="Enlaces":
+            
+            devices = get_paneles(localidad)
+        else:
+            devices = get_enlaces()
+            
         devices_ssh = [[panel.nombre, panel.ip,panel.tecnologia] for panel in devices]
-        # Obtener información del SSH y el estado online
+            
         threading.Thread(target=self.update_table_data, args=(devices,devices_ssh)).start()
 
     
@@ -180,10 +185,14 @@ class MainWindow(QMainWindow):
         
         if edit_dialog.exec_() == QDialog.Accepted:
             new_data = edit_dialog.get_data()
-            for col in range(len(new_data)):
-                self.set_table_item(selected_row, col, new_data[col])
+            request=update_panel(new_data[1],new_data[0],new_data[5],new_data[6])
+            if request:
+                QMessageBox.information(self, "Operación Exitosa", "El panel Actualizado.")
+                for col in range(len(new_data)):
+                    self.set_table_item(selected_row, col, new_data[col])
 
-            
+            else:
+                QMessageBox.information(self, "Operación Cancelada", "Surgio un problema al intentar actualizar")
 
         
     
@@ -201,16 +210,43 @@ class MainWindow(QMainWindow):
         dialog.set_data(data)
         
         if dialog.exec():
-            self.table.removeRow(selected_row)
-            QMessageBox.information(self, "Operación Exitosa", "El panel fue eliminado.")
+            request=delete_panel(data[0])
+            if request:
+                self.table.removeRow(selected_row)
+                QMessageBox.information(self, "Operación Exitosa", "El panel fue eliminado.")
+            else:
+                QMessageBox.information(self, "Operación Cancelada", "El panel no pudo ser eliminado.")
         else:
             QMessageBox.information(self, "Operación Cancelada", "El panel no fue eliminado.")
 
 
     def new_enlace(self):
         print("soy nuevo enlace")
+    
+    
     def new_panel(self):
-        print("soy nuevo panel")
+        window = NewPanelWindows(self)
+    
+        if window.exec() == QDialog.Accepted:
+            data = window.get_data()
+            
+            if data:
+                
+                request=create_panel(data[0],data[1],data[2],data[3],data[4])
+
+                if request:
+
+                    print("Se Agrego correctamente el nuevo panel")
+                else:
+                    print("No se pudo agregar el panel")
+                
+                    
+
+
+
+
+
+
     def create_backup(self):
         print("soy backup")
     def reboot(self):

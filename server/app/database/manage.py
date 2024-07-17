@@ -16,10 +16,13 @@ def get_enlaces():
 
 def create_panel(nombre, ip, localidad, frecuencia, tecnologia):
     """Crea un nuevo dispositivo."""
-    new_device = Panel(nombre=nombre, ip=ip, localidad=localidad, frecuencia=frecuencia, tecnologia=tecnologia)
-    session.add(new_device)
-    session.commit()
-    return new_device
+    try:
+        new_device = Panel(nombre=nombre, ip=ip, localidad=localidad, frecuencia=frecuencia, tecnologia=tecnologia)
+        session.add(new_device)
+        session.commit()
+        return True
+    except:
+        return False
 
 def create_enlace(nombre, ip, localidad, frecuencia, tecnologia):
     """Crea un nuevo dispositivo."""
@@ -28,7 +31,7 @@ def create_enlace(nombre, ip, localidad, frecuencia, tecnologia):
     session.commit()
     return new_device
 
-def delete_device(nombre):
+def delete_panel(nombre):
     """Elimina un dispositivo por su nombre."""
     device = session.query(Panel).filter_by(nombre=nombre).first()
     if device:
@@ -41,12 +44,12 @@ def update_panel(ip,nuevo_nombre=None, nueva_frecuencia=None, nueva_tecnologia=N
     try:
         # Buscar el registro por IP
         panel = session.query(Panel).filter_by(ip=ip).first()
-        
-        # Si el registro no existe, retornar un mensaje
+            
+         # Si el registro no existe, retornar un mensaje
         if not panel:
             return False
         
-        # Actualizar los campos si se proporcionaron nuevos valores
+        #Actualizar los campos si se proporcionaron nuevos valores
         if nuevo_nombre:
             panel.nombre = nuevo_nombre
         if nueva_frecuencia:
@@ -54,7 +57,7 @@ def update_panel(ip,nuevo_nombre=None, nueva_frecuencia=None, nueva_tecnologia=N
         if nueva_tecnologia:
             panel.tecnologia = nueva_tecnologia
         
-        # Guardar los cambios en la base de datos
+        # # Guardar los cambios en la base de datos
         session.commit()
         return True
     except Exception as e:
