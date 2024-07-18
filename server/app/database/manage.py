@@ -8,11 +8,23 @@ def get_paneles(localidad):
     """Obtiene todos los dispositivos de una localidad específica.
     Si se especifica el tipo, filtra por tipo ('panel' o 'enlace').
     """
-    query = session.query(Panel).filter_by(localidad=localidad)
-    return query.all()
+    try:
+        query = session.query(Panel).filter_by(localidad=localidad)
+        return query.all()
+    except:
+        return []
+    finally:
+         session.close()
 
 def get_enlaces():
-     return session.query(Enlace).all()
+    
+    try:
+        query = session.query(Enlace).all()
+        return query
+    except:
+        return []
+    finally:
+         session.close()
 
 def create_panel(nombre, ip, localidad, frecuencia, tecnologia):
     """Crea un nuevo dispositivo."""
@@ -23,6 +35,8 @@ def create_panel(nombre, ip, localidad, frecuencia, tecnologia):
         return True
     except:
         return False
+    finally:
+         session.close()
 
 def create_enlace(nombre, ip, localidad, frecuencia, tecnologia):
     """Crea un nuevo dispositivo."""
@@ -31,31 +45,44 @@ def create_enlace(nombre, ip, localidad, frecuencia, tecnologia):
     session.commit()
     return new_device
 
-def delete_panel(nombre):
+def delete_device(nombre,current_device):
     """Elimina un dispositivo por su nombre."""
-    device = session.query(Panel).filter_by(nombre=nombre).first()
-    if device:
-        session.delete(device)
-        session.commit()
-        return True
-    return False
 
-def update_panel(ip,nuevo_nombre=None, nueva_frecuencia=None, nueva_tecnologia=None):
+    try:
+
+        if current_device == "Panel":
+            device = session.query(Panel).filter_by(nombre=nombre).first()
+        else:
+            device = session.query(Enlace).filter_by(nombre=nombre).first()
+        if device:
+            session.delete(device)
+            session.commit()
+            return True
+        return False
+    except:
+        return False
+    finally:
+         session.close()
+
+def update_device(ip,nuevo_nombre=None, nueva_frecuencia=None, nueva_tecnologia=None,current_device=None):
     try:
         # Buscar el registro por IP
-        panel = session.query(Panel).filter_by(ip=ip).first()
+        if current_device=="Panel":
+            device = session.query(Panel).filter_by(ip=ip).first()
+        else:
+            device = session.query(Enlace).filter_by(ip=ip).first()
             
          # Si el registro no existe, retornar un mensaje
-        if not panel:
+        if not device:
             return False
         
         #Actualizar los campos si se proporcionaron nuevos valores
         if nuevo_nombre:
-            panel.nombre = nuevo_nombre
+            device.nombre = nuevo_nombre
         if nueva_frecuencia:
-            panel.frecuencia = nueva_frecuencia
+            device.frecuencia = nueva_frecuencia
         if nueva_tecnologia:
-            panel.tecnologia = nueva_tecnologia
+            device.tecnologia = nueva_tecnologia
         
         # # Guardar los cambios en la base de datos
         session.commit()

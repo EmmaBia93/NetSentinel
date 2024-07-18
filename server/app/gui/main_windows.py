@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QApplication,QDialog,QMainWindow, QWidget,QMessage
 from PySide6.QtCore import QFile, QTextStream, Qt
 from PySide6.QtGui import QColor,QIcon
 import threading
-from database.manage import get_paneles,update_panel,create_panel,delete_panel,get_enlaces
+from database.manage import get_paneles,update_device,create_panel,delete_device,get_enlaces
 from icmp.icmp_client import is_device_online
 from  ssh.ssh_client import ComunicationSSH
 from toggle.toogle_switch import Toggle
@@ -19,7 +19,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Gestión de Paneles")
         self.setGeometry(100, 100, 1000, 700)
         self.showMaximized()  # Iniciar en pantalla completa
-
+        self.current_device=""
         # Widget central
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -116,9 +116,10 @@ class MainWindow(QMainWindow):
 
     def load_data(self, localidad):
         if localidad!="Enlaces":
-            
+            self.current_device="Panel"
             devices = get_paneles(localidad)
         else:
+            self.current_device="Enlace"
             devices = get_enlaces()
             
         devices_ssh = [[panel.nombre, panel.ip,panel.tecnologia] for panel in devices]
@@ -185,7 +186,7 @@ class MainWindow(QMainWindow):
         
         if edit_dialog.exec_() == QDialog.Accepted:
             new_data = edit_dialog.get_data()
-            request=update_panel(new_data[1],new_data[0],new_data[5],new_data[6])
+            request=update_device(new_data[1],new_data[0],new_data[5],new_data[6],self.current_device)
             if request:
                 QMessageBox.information(self, "Operación Exitosa", "El panel Actualizado.")
                 for col in range(len(new_data)):
@@ -210,14 +211,17 @@ class MainWindow(QMainWindow):
         dialog.set_data(data)
         
         if dialog.exec():
-            request=delete_panel(data[0])
+            
+            request=delete_device(data[0],self.current_device)
+            
+
             if request:
                 self.table.removeRow(selected_row)
-                QMessageBox.information(self, "Operación Exitosa", "El panel fue eliminado.")
+                QMessageBox.information(self, "Operación Exitosa", "El dispositivo fue eliminado.")
             else:
-                QMessageBox.information(self, "Operación Cancelada", "El panel no pudo ser eliminado.")
+                QMessageBox.information(self, "Operación Cancelada", "El dispositivo no pudo ser eliminado.")
         else:
-            QMessageBox.information(self, "Operación Cancelada", "El panel no fue eliminado.")
+            QMessageBox.information(self, "Operación Cancelada", "El dispositivo no fue eliminado.")
 
 
     def new_enlace(self):
@@ -236,9 +240,9 @@ class MainWindow(QMainWindow):
 
                 if request:
 
-                    print("Se Agrego correctamente el nuevo panel")
+                    QMessageBox.information(self, "Operación Exitosa", "El dispositivo fue agregado.")
                 else:
-                    print("No se pudo agregar el panel")
+                    QMessageBox.information(self, "Operación Fallida", "El dispositivo no fue agregado.")
                 
                     
 
@@ -249,5 +253,6 @@ class MainWindow(QMainWindow):
 
     def create_backup(self):
         print("soy backup")
+        
     def reboot(self):
         print("soy reinicio")
