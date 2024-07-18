@@ -12,6 +12,7 @@ if __name__ == "__main__":
     themeFile = "dark_theme.qss"
     
     window = MainWindow(useCustomTheme, themeFile)
+    
     window.show()
     
     sys.exit(app.exec())

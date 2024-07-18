@@ -1,6 +1,6 @@
 import sys
 from PySide6.QtWidgets import QApplication,QDialog,QMainWindow, QWidget,QMessageBox, QVBoxLayout, QHBoxLayout, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QFrame, QCheckBox
-from PySide6.QtCore import QFile, QTextStream, Qt
+from PySide6.QtCore import QFile, QTextStream, Qt,QSize
 from PySide6.QtGui import QColor,QIcon,QPixmap,QPainter
 import threading
 from database.manage import get_paneles,update_device,create_device,delete_device,get_enlaces
@@ -21,12 +21,14 @@ class MainWindow(QMainWindow):
         self.showMaximized()  # Iniciar en pantalla completa
         self.current_device=""
         # Widget central
+        #self.setWindowFlags(Qt.FramelessWindowHint)
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        
+        self.setWindowIcon(QIcon("C:\\Users\\emmab\\Documents\\PanelesPY\\server\\app\\gui\\img\\iconsatelite.ico"))
+        self.setIconSize(QSize(30,30))
         # Layout principal
         main_layout = QHBoxLayout(central_widget)
-        
+      
         # Menú de localidades
         menu_frame = QFrame()
         menu_frame.setFrameShape(QFrame.StyledPanel)
@@ -41,6 +43,8 @@ class MainWindow(QMainWindow):
             btn = QPushButton(localidad)
             btn.setFixedHeight(60)  # Hacer los botones más grandes
             btn.setFixedWidth(200)
+            btn.setIcon(QIcon("C:\\Users\\emmab\\Documents\\PanelesPY\\server\\app\\gui\\img\\point.png"))
+            btn.setIconSize(QSize(20,30))
             btn.clicked.connect(lambda checked, loc=localidad: self.load_data(loc))
             menu_layout.addWidget(btn)
         
@@ -289,7 +293,23 @@ class MainWindow(QMainWindow):
 
 
     def create_backup(self):
-        print("soy backup")
-        
+        selected_row = self.table.currentRow()
+        conn=ComunicationSSH()
+        if selected_row < 0:
+                return
+
+        data = [
+                self.table.item(selected_row, col).text() if self.table.item(selected_row, col) is not None else "" 
+                for col in range(self.table.columnCount())
+            ]
+        request = conn.backup(data[0],data[1],data[6])
+       
+        if request:
+
+            QMessageBox.information(self, "Operación Exitosa", "Se Realizó el Backup con exito.")
+        else:
+            QMessageBox.information(self, "Operación Fallida", "No Se pudo realizar el Backup.")
+
+
     def reboot(self):
         print("soy reinicio")

@@ -24,19 +24,23 @@ class ComunicationSSH:
         return ssh
     
     
-    def backup(self,ip:str,port:int,user:str,password:str,name_disp: str):
+    def backup(self,name:str,ip:str,tecno:str):
         ruta = askdirectory()
+        load_dotenv()
         
         if not ruta:
             print("No se seleccionó ninguna ruta.")
             return False
 
         try:
-            
-            ssh = self.__create_ssh_client(ip,port,user,password)
-            local_path = os.path.join(ruta, name_disp.replace(" ", "") + ".cfg")
+            if tecno != 'AC':
+                client = self.__create_ssh_client(ip, os.getenv('PORT'), os.getenv('UBNT'), os.getenv('PASS_AIRMAX'))
+            else:
+                client = self.__create_ssh_client(ip, os.getenv('PORT'), os.getenv('UBNT'), os.getenv('PASS_AC'))
+           
+            local_path = os.path.join(ruta, name.replace(" ", "") + ".cfg")
                        
-            with SCPClient(ssh.get_transport()) as scp:
+            with SCPClient(client.get_transport()) as scp:
                 scp.get('/var/tmp/system.cfg', local_path)
         
             return True
@@ -54,7 +58,7 @@ class ComunicationSSH:
             print(f"Error inesperado: {e}")
             return False
         finally:
-            ssh.close()
+            client.close()
 
     
     def reboot(self, ip: str,tecno:str) -> bool:
