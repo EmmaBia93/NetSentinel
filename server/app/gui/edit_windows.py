@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QDialog,QLineEdit,QLabel, QVBoxLayout, QHBoxLayout
 class EditWindow(QDialog):
     def __init__(self, parent=None):
         super(EditWindow, self).__init__(parent)
-        self.setWindowTitle("Editar Panel")
+        self.setWindowTitle("Editar Dispositivo")
         self.setFixedSize(400, 600)
         self.data=[]
         layout = QVBoxLayout(self)

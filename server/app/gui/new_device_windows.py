@@ -6,7 +6,7 @@ from PySide6.QtGui import QRegularExpressionValidator
 class NewPanelWindows(QDialog):
     def __init__(self, parent=None):
         super(NewPanelWindows, self).__init__(parent)
-        self.setWindowTitle("Crear Nuevo Panel")
+        self.setWindowTitle("Crear Nuevo Dispositivo")
         self.setFixedSize(500, 600)
 
         # Layout principal

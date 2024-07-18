@@ -26,13 +26,18 @@ def get_enlaces():
     finally:
          session.close()
 
-def create_panel(nombre, ip, localidad, frecuencia, tecnologia):
+def create_device(nombre, ip, localidad, frecuencia, tecnologia,currente_device):
     """Crea un nuevo dispositivo."""
     try:
-        new_device = Panel(nombre=nombre, ip=ip, localidad=localidad, frecuencia=frecuencia, tecnologia=tecnologia)
+        if currente_device == "Panel":
+            new_device = Panel(nombre=nombre, ip=ip, localidad=localidad, frecuencia=frecuencia, tecnologia=tecnologia)
+        else:
+            new_device = Enlace(nombre=nombre, ip=ip, localidad=localidad, frecuencia=frecuencia, tecnologia=tecnologia)
+        
         session.add(new_device)
         session.commit()
         return True
+    
     except:
         return False
     finally:

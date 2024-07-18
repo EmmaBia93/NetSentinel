@@ -45,6 +45,7 @@ QPushButton:pressed {
 QTableWidget {
     background-color: #282a36;
     border: 1px solid #44475a;
+    font-size:20px;
     gridline-color: #6272a4;
     color: #f8f8f2;
 }
@@ -52,16 +53,23 @@ QTableWidget {
 QHeaderView::section {
     background-color: #44475a;
     color: #f8f8f2;
-    font-size:19px;
+    font-size:21px;
+    font-weight: bold;
     padding: 5px;
     border: 1px solid #6272a4;
 }
 
 QTableWidget::item {
-    padding: 5px;
-    border: none;
+    padding: 0;
+   
     text-align: center;  /* Centrar el texto en las celdas */
+    
 }
+
+QIcon{
+    padding:10px;
+}
+
 
 QTableWidget::item:selected {
     background-color: #bd93f9;

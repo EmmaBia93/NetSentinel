@@ -1,15 +1,15 @@
 import sys
 from PySide6.QtWidgets import QApplication,QDialog,QMainWindow, QWidget,QMessageBox, QVBoxLayout, QHBoxLayout, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QFrame, QCheckBox
 from PySide6.QtCore import QFile, QTextStream, Qt
-from PySide6.QtGui import QColor,QIcon
+from PySide6.QtGui import QColor,QIcon,QPixmap,QPainter
 import threading
-from database.manage import get_paneles,update_device,create_panel,delete_device,get_enlaces
+from database.manage import get_paneles,update_device,create_device,delete_device,get_enlaces
 from icmp.icmp_client import is_device_online
 from  ssh.ssh_client import ComunicationSSH
 from toggle.toogle_switch import Toggle
 from gui.edit_windows import EditWindow
 from gui.delete_windows import DeletePanelDialog
-from gui.new_panel import NewPanelWindows
+from gui.new_device_windows import NewPanelWindows
 
 
 class MainWindow(QMainWindow):
@@ -112,7 +112,15 @@ class MainWindow(QMainWindow):
             stream = QTextStream(file)
             self.setStyleSheet(stream.readAll())
 
-
+    def create_colored_dot_icon(self,color):
+        pixmap = QPixmap(30, 30)
+        pixmap.fill(Qt.transparent)
+        painter = QPainter(pixmap)
+        painter.setBrush(color)
+        painter.setPen(Qt.NoPen)
+        painter.drawEllipse(0, 0, 30, 30)
+        painter.end()
+        return QIcon(pixmap)
 
     def load_data(self, localidad):
         if localidad!="Enlaces":
@@ -162,14 +170,30 @@ class MainWindow(QMainWindow):
             self.set_table_item(row, 7, "Online" if online else "Offline")
             
 
+
+
+
            
 
     def set_table_item(self, row, column, text):
         item = QTableWidgetItem(text)
         item.setTextAlignment(Qt.AlignCenter)
         item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+        icon=QIcon()
+        if column==7:
+            if text == "Online":
+                icon = self.create_colored_dot_icon(QColor(35, 155, 86))
+               
+            else:
+                icon = self.create_colored_dot_icon(QColor(176, 58, 46))
+
+        if icon:
+            item.setIcon(icon)
+            
         self.table.setItem(row, column, item)
         
+
+
 
     def edit_selected_row(self):
         selected_row = self.table.currentRow()
@@ -188,7 +212,7 @@ class MainWindow(QMainWindow):
             new_data = edit_dialog.get_data()
             request=update_device(new_data[1],new_data[0],new_data[5],new_data[6],self.current_device)
             if request:
-                QMessageBox.information(self, "Operación Exitosa", "El panel Actualizado.")
+                QMessageBox.information(self, "Operación Exitosa", "El Dispositivo fue Actualizado.")
                 for col in range(len(new_data)):
                     self.set_table_item(selected_row, col, new_data[col])
 
@@ -225,7 +249,20 @@ class MainWindow(QMainWindow):
 
 
     def new_enlace(self):
-        print("soy nuevo enlace")
+        window = NewPanelWindows(self)
+    
+        if window.exec() == QDialog.Accepted:
+            data = window.get_data()
+            
+            if data:
+                
+                request=create_device(data[0],data[1],data[2],data[3],data[4],"Enlace")
+
+                if request:
+
+                    QMessageBox.information(self, "Operación Exitosa", "El dispositivo fue agregado.")
+                else:
+                    QMessageBox.information(self, "Operación Fallida", "El dispositivo no fue agregado.")
     
     
     def new_panel(self):
@@ -236,7 +273,7 @@ class MainWindow(QMainWindow):
             
             if data:
                 
-                request=create_panel(data[0],data[1],data[2],data[3],data[4])
+                request=create_device(data[0],data[1],data[2],data[3],data[4],"Panel")
 
                 if request:
 
