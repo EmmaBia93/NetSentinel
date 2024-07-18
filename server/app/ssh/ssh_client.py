@@ -6,7 +6,7 @@ import concurrent.futures
 from dotenv import load_dotenv
 from tkinter.filedialog import askdirectory
 from ssh.tools_aux import cantidad_horas_activo
-
+import re
 class ComunicationSSH:
     
         
@@ -163,7 +163,7 @@ class ComunicationSSH:
                         "clientes": client_count,
                         "ip": ip,
                         "tiempo": cantidad_horas_activo(uptime),
-                        "velocidad": speed
+                        "velocidad": re.sub(r'\D', '',speed)
                     }
                 except Exception as exc:
                     print(f'Error processing {ip}: {exc}')

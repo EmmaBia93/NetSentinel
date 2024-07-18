@@ -45,7 +45,7 @@ QPushButton:pressed {
 QTableWidget {
     background-color: #282a36;
     border: 1px solid #44475a;
-    font-size:20px;
+    font-size:15px;
     gridline-color: #6272a4;
     color: #f8f8f2;
 }
@@ -53,7 +53,7 @@ QTableWidget {
 QHeaderView::section {
     background-color: #44475a;
     color: #f8f8f2;
-    font-size:21px;
+    font-size:18px;
     font-weight: bold;
     padding: 5px;
     border: 1px solid #6272a4;

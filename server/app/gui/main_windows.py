@@ -17,7 +17,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Gestión de Paneles")
-        self.setGeometry(100, 100, 1000, 700)
+        self.setGeometry(100, 100, 1920, 1080)
         self.showMaximized()  # Iniciar en pantalla completa
         self.current_device=""
         # Widget central
@@ -81,14 +81,15 @@ class MainWindow(QMainWindow):
         # Tabla de paneles
         self.table = QTableWidget()
         self.table.setColumnCount(8)
-        self.table.setHorizontalHeaderLabels(["Nombre", "IP", "Tiempo", "Clientes", "Velocidad", "Frecuencia","Tec","Live?"])
+        self.table.setHorizontalHeaderLabels(["Nombre", "IP", "Tiempo", "Clientes", "LAN", "Hz","Tec","Live?"])
         self.table.horizontalHeader().setSectionResizeMode(7,QHeaderView.Stretch)
         self.table.setColumnWidth(0, 300)
-        self.table.setColumnWidth(1, 200)
-        self.table.setColumnWidth(2, 200)
-        self.table.setColumnWidth(3, 150)
-        self.table.setColumnWidth(4, 200)
-        self.table.setColumnWidth(5, 200)
+        self.table.setColumnWidth(1, 150)
+        self.table.setColumnWidth(2, 180)
+        self.table.setColumnWidth(3, 100)
+        self.table.setColumnWidth(4, 60)
+        self.table.setColumnWidth(5, 70)
+        self.table.setColumnWidth(6, 60)
 
       
         
