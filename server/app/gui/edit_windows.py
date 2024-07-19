@@ -1,7 +1,8 @@
 import sys
 from PySide6 import QtCore
+from PySide6.QtGui import QFont, QRegularExpressionValidator
 from PySide6.QtWidgets import QDialog,QLineEdit,QLabel, QVBoxLayout, QHBoxLayout, QPushButton
-
+from PySide6.QtCore import QRegularExpression
 
 class EditWindow(QDialog):
     def __init__(self, parent=None):
@@ -10,23 +11,30 @@ class EditWindow(QDialog):
         self.setFixedSize(400, 600)
         self.data=[]
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)  # Establecer márgenes
+        layout.setContentsMargins(10, 0, 10,20)  # Establecer márgenes
         layout.setSpacing(20) 
         
         # Campos de edición
+        height=40
         self.name_edit = QLineEdit()
-        self.name_edit.setFixedHeight(50)
+        self.name_edit.setFixedHeight(height)
         self.name_edit.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.ip_edit = QLineEdit()
-        self.ip_edit.setFixedHeight(50)
+        self.ip_edit.setFixedHeight(height)
         self.ip_edit.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.freq_edit = QLineEdit()
-        self.freq_edit.setFixedHeight(50)
+        self.freq_edit.setFixedHeight(height)
         self.freq_edit.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.tecno_edit = QLineEdit()
-        self.tecno_edit.setFixedHeight(50)
+        self.tecno_edit.setFixedHeight(height)
         self.tecno_edit.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        ip_regex = QRegularExpression(r"^10\.(10[3-9]|110)\.\d{1,3}\.\d{1,3}$")
+        ip_validator = QRegularExpressionValidator(ip_regex, self.ip_edit)
+        self.ip_edit.setValidator(ip_validator)
 
+        frec_regex = QRegularExpression(r'^(?:[2-5]\d{3}|6000)$')
+        frec_validator = QRegularExpressionValidator(frec_regex,self.freq_edit)
+        self.freq_edit.setValidator(frec_validator)
 
         layout.addWidget(QLabel("Nombre:",alignment=QtCore.Qt.AlignmentFlag.AlignCenter))
         layout.addWidget(self.name_edit)

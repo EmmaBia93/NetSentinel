@@ -11,6 +11,7 @@ QWidget {
 
 QLabel {
     color:#bd93f9
+    
 }
 QComboBox {
     color:#bd93f9;
@@ -76,10 +77,7 @@ QTableWidget::item:selected {
     color: #282a36;
 }
 
-/* QFrame settings */
-QFrame {
-    border: 1px solid #44475a;
-}
+
 
 /* QLineEdit settings */
 QLineEdit {

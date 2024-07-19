@@ -48,6 +48,10 @@ class NewPanelWindows(QDialog):
         ip_validator = QRegularExpressionValidator(ip_regex, self.ip_edit)
         self.ip_edit.setValidator(ip_validator)
 
+        
+        frec_regex = QRegularExpression(r'^(?:[2-5]\d{3}|6000)$')
+        frec_validator = QRegularExpressionValidator(frec_regex,self.frecuencia)
+        self.frecuencia.setValidator(frec_validator)
         # Agregar widgets al formulario
         self.form_layout.addRow("Nombre:", self.name_edit)
         self.form_layout.addRow("IP:", self.ip_edit)

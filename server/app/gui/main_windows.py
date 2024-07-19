@@ -1,4 +1,3 @@
-import sys
 from PySide6.QtWidgets import QApplication,QDialog,QMainWindow, QWidget,QMessageBox, QVBoxLayout, QHBoxLayout, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QFrame, QCheckBox
 from PySide6.QtCore import QFile, QTextStream, Qt,QSize
 from PySide6.QtGui import QColor,QIcon,QPixmap,QPainter
@@ -10,6 +9,7 @@ from toggle.toogle_switch import Toggle
 from gui.edit_windows import EditWindow
 from gui.delete_windows import DeletePanelDialog
 from gui.new_device_windows import NewPanelWindows
+import webbrowser
 
 
 class MainWindow(QMainWindow):
@@ -66,11 +66,11 @@ class MainWindow(QMainWindow):
                        "Nuevo Enlace":self.new_enlace,
                        "Nuevo Panel":self.new_panel,
                        "Backup":self.create_backup,
-                       "Reinicio":self.reboot
+                       "Reiniciar":self.reboot
                        }
         
 
-        button_labels = ["Editar", "Borrar", "Nuevo Enlace", "Nuevo Panel", "Backup", "Reinicio"]
+        button_labels = ["Editar", "Borrar", "Nuevo Enlace", "Nuevo Panel", "Backup", "Reiniciar"]
         for label in button_labels:
             btn = QPushButton(label)
             buttons_layout.addWidget(btn)
@@ -98,6 +98,7 @@ class MainWindow(QMainWindow):
         # Hacer las filas seleccionables pero no editables
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.table.itemDoubleClicked.connect(self.open_url)
 
        
 
@@ -157,6 +158,7 @@ class MainWindow(QMainWindow):
 
         # Actualizar la tabla en el hilo principal
         self.table.setRowCount(len(devices))
+        
         for row, device in enumerate(devices):
             name = device.nombre
             ip = device.ip
@@ -184,6 +186,8 @@ class MainWindow(QMainWindow):
         item = QTableWidgetItem(text)
         item.setTextAlignment(Qt.AlignCenter)
         item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+        
+        
         icon=QIcon()
         if column==7:
             if text == "Online":
@@ -199,6 +203,17 @@ class MainWindow(QMainWindow):
         
 
 
+    def open_url(self):
+        selected_row = self.table.currentRow()
+        if selected_row < 0:
+            return
+        data = [
+            self.table.item(selected_row, col).text() if self.table.item(selected_row, col) is not None else "" 
+            for col in range(self.table.columnCount())
+        ]
+
+        url = f"http://{data[1]}:83"
+        webbrowser.open(url)
 
     def edit_selected_row(self):
         selected_row = self.table.currentRow()
@@ -313,4 +328,19 @@ class MainWindow(QMainWindow):
 
 
     def reboot(self):
-        print("soy reinicio")
+        selected_row = self.table.currentRow()
+        conn=ComunicationSSH()
+        if selected_row < 0:
+                return
+
+        data = [
+                self.table.item(selected_row, col).text() if self.table.item(selected_row, col) is not None else "" 
+                for col in range(self.table.columnCount())
+            ]
+        request = conn.reboot(data[1],data[6])
+       
+        if request:
+
+            QMessageBox.information(self, "Operación Exitosa", "Se Realizó el Reinicio con Éxito.")
+        else:
+            QMessageBox.information(self, "Operación Fallida", "No Se pudo realizar el Reinicio.")

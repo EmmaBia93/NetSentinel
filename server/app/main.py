@@ -1,7 +1,7 @@
-from database.manage import get_paneles
-from ssh.ssh_client import ComunicationSSH
-from icmp.icmp_client import is_device_online
-from gui.main_windows import QApplication,MainWindow
+from app.database.manage import get_paneles
+from app.ssh.ssh_client import ComunicationSSH
+from app.icmp.icmp_client import is_device_online
+from app.gui.main_windows import QApplication,MainWindow
 import sys
 
 if __name__ == "__main__":
