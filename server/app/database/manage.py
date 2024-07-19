@@ -1,5 +1,5 @@
 from sqlalchemy.orm import sessionmaker
-from database.models import Panel,Enlace, init_db
+from app.database.models import Panel,Enlace, init_db
 
 Session = init_db()
 session = Session()

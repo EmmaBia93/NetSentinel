@@ -2,13 +2,13 @@ from PySide6.QtWidgets import QApplication,QDialog,QMainWindow, QWidget,QMessage
 from PySide6.QtCore import QFile, QTextStream, Qt,QSize
 from PySide6.QtGui import QColor,QIcon,QPixmap,QPainter
 import threading
-from database.manage import get_paneles,update_device,create_device,delete_device,get_enlaces
-from icmp.icmp_client import is_device_online
-from  ssh.ssh_client import ComunicationSSH
-from toggle.toogle_switch import Toggle
-from gui.edit_windows import EditWindow
-from gui.delete_windows import DeletePanelDialog
-from gui.new_device_windows import NewPanelWindows
+from app.database.manage import get_paneles,update_device,create_device,delete_device,get_enlaces
+from app.icmp.icmp_client import is_device_online
+from  app.ssh.ssh_client import ComunicationSSH
+from app.toggle.toogle_switch import Toggle
+from app.gui.edit_windows import EditWindow
+from app.gui.delete_windows import DeletePanelDialog
+from app.gui.new_device_windows import NewPanelWindows
 import webbrowser
 
 

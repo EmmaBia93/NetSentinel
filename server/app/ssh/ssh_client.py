@@ -5,7 +5,7 @@ from scp import SCPClient
 import concurrent.futures
 from dotenv import load_dotenv
 from tkinter.filedialog import askdirectory
-from ssh.tools_aux import cantidad_horas_activo
+from app.ssh.tools_aux import cantidad_horas_activo
 import re
 class ComunicationSSH:
     
