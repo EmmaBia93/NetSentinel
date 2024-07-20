@@ -9,6 +9,8 @@ from app.toggle.toogle_switch import Toggle
 from app.gui.edit_windows import EditWindow
 from app.gui.delete_windows import DeletePanelDialog
 from app.gui.new_device_windows import NewPanelWindows
+from app.gui.dialog_success import DialogSuccess
+from app.gui.dialog_error  import DialogError
 import webbrowser
 
 
@@ -232,12 +234,13 @@ class MainWindow(QMainWindow):
             new_data = edit_dialog.get_data()
             request=update_device(new_data[1],new_data[0],new_data[5],new_data[6],self.current_device)
             if request:
-                QMessageBox.information(self, "Operación Exitosa", "El Dispositivo fue Actualizado.")
+                DialogSuccess(self,"Se Actualizó Correctamente!!!").exec()
+                
                 for col in range(len(new_data)):
                     self.set_table_item(selected_row, col, new_data[col])
 
             else:
-                QMessageBox.information(self, "Operación Cancelada", "Surgio un problema al intentar actualizar")
+                DialogError(self,"No Se Pudo Actualizar!!!").exec()
 
         
     
@@ -261,11 +264,12 @@ class MainWindow(QMainWindow):
 
             if request:
                 self.table.removeRow(selected_row)
-                QMessageBox.information(self, "Operación Exitosa", "El dispositivo fue eliminado.")
+                DialogSuccess(self,"Se Eliminó Correctamente el Dispositivo").exec()
             else:
-                QMessageBox.information(self, "Operación Cancelada", "El dispositivo no pudo ser eliminado.")
+                DialogError(self,"No Se Pudo Eliminar el Dispositivo").exec()
         else:
-            QMessageBox.information(self, "Operación Cancelada", "El dispositivo no fue eliminado.")
+             DialogError(self,"Se Canceló la Operación!!!").exec()
+             
 
 
     def new_enlace(self):
@@ -280,9 +284,9 @@ class MainWindow(QMainWindow):
 
                 if request:
 
-                    QMessageBox.information(self, "Operación Exitosa", "El dispositivo fue agregado.")
+                    DialogSuccess(self,"Se Ha Creado el Dispositivo Con Éxito!!!").exec()
                 else:
-                    QMessageBox.information(self, "Operación Fallida", "El dispositivo no fue agregado.")
+                     DialogError(self, "Surgió un Problema al Tratar de Crear el Dispositivo").exec()
     
     
     def new_panel(self):
@@ -297,9 +301,9 @@ class MainWindow(QMainWindow):
 
                 if request:
 
-                    QMessageBox.information(self, "Operación Exitosa", "El dispositivo fue agregado.")
+                    DialogSuccess(self,"Se Ha Creado el Dispositivo Con Éxito!!!").exec()
                 else:
-                    QMessageBox.information(self, "Operación Fallida", "El dispositivo no fue agregado.")
+                   DialogError(self, "Surgió un Problema al Tratar de Crear el Dispositivo").exec()
                 
                     
 
@@ -322,9 +326,9 @@ class MainWindow(QMainWindow):
        
         if request:
 
-            QMessageBox.information(self, "Operación Exitosa", "Se Realizó el Backup con exito.")
+            DialogSuccess(self,"Se Realizó el Backup con exito.").exec()
         else:
-            QMessageBox.information(self, "Operación Fallida", "No Se pudo realizar el Backup.")
+            DialogError(self,"No Se pudo realizar el Backup.").exec()
 
 
     def reboot(self):
@@ -341,6 +345,6 @@ class MainWindow(QMainWindow):
        
         if request:
 
-            QMessageBox.information(self, "Operación Exitosa", "Se Realizó el Reinicio con Éxito.")
+            DialogSuccess(self, "Se Realizó el Reinicio con Éxito.").exec()
         else:
-            QMessageBox.information(self, "Operación Fallida", "No Se pudo realizar el Reinicio.")
+            DialogError(self, "No Se pudo realizar el Reinicio.").exec()
