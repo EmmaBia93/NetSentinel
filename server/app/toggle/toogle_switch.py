@@ -7,7 +7,7 @@ class Toggle(QCheckBox):
 
     def __init__(self,
                  width=60,
-                 bg_color="#777",
+                 bg_color="#28B463",
                  circle_color="#DDD",
                  active_color="#e74c3c",
                  animation_curve=QEasingCurve.OutBounce

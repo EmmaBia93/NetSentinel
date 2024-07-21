@@ -11,6 +11,7 @@ from app.gui.delete_windows import DeletePanelDialog
 from app.gui.new_device_windows import NewPanelWindows
 from app.gui.dialog_success import DialogSuccess
 from app.gui.dialog_error  import DialogError
+from app.gui.dialog_auth import AuthDialog
 import webbrowser
 
 
@@ -79,6 +80,7 @@ class MainWindow(QMainWindow):
             btn.clicked.connect(btn_funcion[label])
         
         right_layout.addWidget(buttons_frame)
+        main_layout.addWidget(right_panel)
         
         # Tabla de paneles
         self.table = QTableWidget()
@@ -107,7 +109,11 @@ class MainWindow(QMainWindow):
 
         right_layout.addWidget(self.table)
         
-        main_layout.addWidget(right_panel)
+        # self.status_bar = QStatusBar()
+        # self.setStatusBar(self.status_bar)
+        # self.client_count_label = QLabel("Clientes Totales: 0")
+        # self.client_count_label.setAlignment(Qt.AlignCenter)
+        # self.status_bar.addPermanentWidget(self.client_count_label)
 
         # Aplicar el tema personalizado si está habilitado
         if useCustomTheme:
@@ -218,58 +224,64 @@ class MainWindow(QMainWindow):
         webbrowser.open(url)
 
     def edit_selected_row(self):
-        selected_row = self.table.currentRow()
-        if selected_row < 0:
-            return
-
-        data = [
-            self.table.item(selected_row, col).text() if self.table.item(selected_row, col) is not None else "" 
-            for col in range(self.table.columnCount())
-        ]
-
-        edit_dialog = EditWindow(self)
-        edit_dialog.set_data(data)
+        auth=AuthDialog(self)
         
-        if edit_dialog.exec_() == QDialog.Accepted:
-            new_data = edit_dialog.get_data()
-            request=update_device(new_data[1],new_data[0],new_data[5],new_data[6],self.current_device)
-            if request:
-                DialogSuccess(self,"Se Actualizó Correctamente!!!").exec()
-                
-                for col in range(len(new_data)):
-                    self.set_table_item(selected_row, col, new_data[col])
+        if auth.exec_() == QDialog.Accepted:
+            selected_row = self.table.currentRow()
+            if selected_row < 0:
+                return
 
-            else:
-                DialogError(self,"No Se Pudo Actualizar!!!").exec()
+            data = [
+                self.table.item(selected_row, col).text() if self.table.item(selected_row, col) is not None else "" 
+                for col in range(self.table.columnCount())
+            ]
+
+            edit_dialog = EditWindow(self)
+            edit_dialog.set_data(data)
+            
+            if edit_dialog.exec_() == QDialog.Accepted:
+                new_data = edit_dialog.get_data()
+                request=update_device(new_data[1],new_data[0],new_data[5],new_data[6],self.current_device)
+                if request:
+                    DialogSuccess(self,"Se Actualizó Correctamente!!!").exec()
+                    
+                    for col in range(len(new_data)):
+                        self.set_table_item(selected_row, col, new_data[col])
+
+                else:
+                    DialogError(self,"No Se Pudo Actualizar!!!").exec()
 
         
     
     def borrar_device(self):
-        selected_row = self.table.currentRow()
-        if selected_row < 0:
-            return
-
-        data = [
-            self.table.item(selected_row, col).text() if self.table.item(selected_row, col) is not None else "" 
-            for col in range(self.table.columnCount())
-        ]
-
-        dialog = DeletePanelDialog(self)
-        dialog.set_data(data)
+        auth=AuthDialog(self)
         
-        if dialog.exec():
-            
-            request=delete_device(data[0],self.current_device)
-            
+        if auth.exec_() == QDialog.Accepted:
+            selected_row = self.table.currentRow()
+            if selected_row < 0:
+                return
 
-            if request:
-                self.table.removeRow(selected_row)
-                DialogSuccess(self,"Se Eliminó Correctamente el Dispositivo").exec()
+            data = [
+                self.table.item(selected_row, col).text() if self.table.item(selected_row, col) is not None else "" 
+                for col in range(self.table.columnCount())
+            ]
+
+            dialog = DeletePanelDialog(self)
+            dialog.set_data(data)
+            
+            if dialog.exec():
+                
+                request=delete_device(data[0],self.current_device)
+                
+
+                if request:
+                    self.table.removeRow(selected_row)
+                    DialogSuccess(self,"Se Eliminó Correctamente el Dispositivo").exec()
+                else:
+                    DialogError(self,"No Se Pudo Eliminar el Dispositivo").exec()
             else:
-                DialogError(self,"No Se Pudo Eliminar el Dispositivo").exec()
-        else:
-             DialogError(self,"Se Canceló la Operación!!!").exec()
-             
+                DialogError(self,"Se Canceló la Operación!!!").exec()
+                
 
 
     def new_enlace(self):
