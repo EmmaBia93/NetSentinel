@@ -1,0 +1,125 @@
+/* dark_theme.qss - Inspired by Dracula Theme */
+
+/* General settings */
+QWidget {
+    background-color: #282a36;
+    color: #f8f8f2;
+    font-family: "JetBrains Mono";
+    font-size: 15px;
+}
+
+
+QLabel {
+    color:#bd93f9
+    
+}
+QComboBox {
+    color:#bd93f9;
+    background-color: #282a36
+}
+QComboBox::placeholder{
+    color:#bd93f9;
+}
+/* QPushButton settings */
+QPushButton {
+    background-color: #44475a;
+    color: #f8f8f2;
+    border: 1px solid #6272a4;
+    border-radius: 4px;
+    padding: 10px;
+    font-size: 20px;
+}
+
+
+
+
+QPushButton:hover {
+    background-color: #6272a4;
+}
+
+QPushButton:pressed {
+    background-color: #bd93f9;
+    color: #282a36;
+}
+
+/* QTableWidget settings */
+QTableWidget {
+    background-color: #282a36;
+    border: 1px solid #44475a;
+    font-size:15px;
+    gridline-color: #6272a4;
+    color: #f8f8f2;
+}
+
+QHeaderView::section {
+    background-color: #44475a;
+    color: #f8f8f2;
+    font-size:18px;
+    font-weight: bold;
+    padding: 5px;
+    border: 1px solid #6272a4;
+}
+
+QTableWidget::item {
+    padding: 0;
+   
+    text-align: center;  /* Centrar el texto en las celdas */
+    
+}
+
+QIcon{
+    padding:10px;
+}
+
+
+QTableWidget::item:selected {
+    background-color: #bd93f9;
+    color: #282a36;
+}
+
+
+
+/* QLineEdit settings */
+QLineEdit {
+    background-color: #44475a;
+    color: #f8f8f2;
+    border: 1px solid #6272a4;
+    padding: 5px;
+    border-radius: 4px;
+}
+
+/* QMainWindow settings */
+QMainWindow {
+    background-color: #282a36;
+}
+
+/* QScrollBar settings */
+QScrollBar:vertical {
+    background-color: #44475a;
+    width: 15px;
+}
+
+QScrollBar::handle:vertical {
+    background-color: #6272a4;
+    min-height: 20px;
+    border: 1px solid #282a36;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    background-color: #44475a;
+    height: 15px;
+}
+
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+    background-color: #44475a;
+}
+
+/* QScrollBar horizontal settings */
+QScrollBar:horizontal {
+    background-color: #44475a;
+    height: 15px;
+}
+
+QScrollBar

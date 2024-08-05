@@ -12,6 +12,7 @@ from app.gui.new_device_windows import NewPanelWindows
 from app.gui.dialog_success import DialogSuccess
 from app.gui.dialog_error  import DialogError
 from app.gui.dialog_auth import AuthDialog
+from app.gui.circle_status import StatusCircle
 import webbrowser
 
 
@@ -27,7 +28,7 @@ class MainWindow(QMainWindow):
         #self.setWindowFlags(Qt.FramelessWindowHint)
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        self.setWindowIcon(QIcon("C:\\Users\\emmab\\Documents\\PanelesPY\\server\\app\\gui\\img\\iconsatelite.ico"))
+        self.setWindowIcon(QIcon("C:\\Users\\PC\\repositorio\\PanelesPY\\server\\app\\gui\\img\\iconsatelite.ico"))
         self.setIconSize(QSize(30,30))
         # Layout principal
         main_layout = QHBoxLayout(central_widget)
@@ -42,12 +43,17 @@ class MainWindow(QMainWindow):
         menu_layout.addWidget(self.ssh_switch,Qt.AlignCenter,Qt.AlignHCenter)
         
         localidades = ["Media Agua", "Los Berros", "Colonia", "Cochagual", "Carpinteria","Cañada", "Tres Esquinas","Enlaces"]
+        
         for localidad in localidades:
             btn = QPushButton(localidad)
             btn.setFixedHeight(60)  # Hacer los botones más grandes
             btn.setFixedWidth(200)
-            btn.setIcon(QIcon("C:\\Users\\emmab\\Documents\\PanelesPY\\server\\app\\gui\\img\\point.png"))
-            btn.setIconSize(QSize(20,30))
+            
+            icon = self.create_colored_dot_icon(QColor("transparent"))
+            btn.setIcon(icon)
+            # btn.setIcon(QIcon("C:\\Users\\emmab\\Documents\\PanelesPY\\server\\app\\gui\\img\\point.png"))
+            btn.setIconSize(QSize(10,10))
+            
             btn.clicked.connect(lambda checked, loc=localidad: self.load_data(loc))
             menu_layout.addWidget(btn)
         
@@ -88,12 +94,12 @@ class MainWindow(QMainWindow):
         self.table.setHorizontalHeaderLabels(["Nombre", "IP", "Tiempo", "Clientes", "LAN", "Hz","Tec","Live?"])
         self.table.horizontalHeader().setSectionResizeMode(7,QHeaderView.Stretch)
         self.table.setColumnWidth(0, 300)
-        self.table.setColumnWidth(1, 150)
-        self.table.setColumnWidth(2, 180)
-        self.table.setColumnWidth(3, 100)
-        self.table.setColumnWidth(4, 60)
+        self.table.setColumnWidth(1, 200)
+        self.table.setColumnWidth(2, 200)
+        self.table.setColumnWidth(3, 120)
+        self.table.setColumnWidth(4, 100)
         self.table.setColumnWidth(5, 70)
-        self.table.setColumnWidth(6, 60)
+        self.table.setColumnWidth(6, 100)
 
       
         
