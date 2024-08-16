@@ -3,6 +3,7 @@ from PySide6.QtCore import QFile, QTextStream, Qt,QSize, QTimer
 from PySide6.QtGui import QColor,QIcon,QPixmap,QPainter
 import threading
 from time import sleep
+import datetime
 from app.database.manage import get_paneles,update_device,create_device,delete_device,get_enlaces
 from app.icmp.icmp_client import is_device_online
 from  app.ssh.ssh_client import ComunicationSSH
@@ -25,7 +26,8 @@ class MainWindow(QMainWindow):
         self.setGeometry(100, 100, 1920, 1080)
         self.showMaximized()  # Iniciar en pantalla completa
         self.current_device=""
-        self.count=0
+        self.hora_inicio = datetime.time(9, 0)
+        self.hora_fin = datetime.time(21, 0) 
         # Widget central
         #self.setWindowFlags(Qt.FramelessWindowHint)
         central_widget = QWidget()
@@ -380,18 +382,39 @@ class MainWindow(QMainWindow):
         else:
             DialogError(self, "No Se pudo realizar el Reinicio.").exec()
             
+    
+    def reset_buttons(self):
+        
+        def obtener_icono(estado):
+                """ Devuelve un icono basado en el estado. """
+                return self.create_colored_dot_icon(QColor(estado))
             
+        for boton in self.botones:
+                    
+            boton.setIcon(obtener_icono("transparent"))
+            continue
             
     
     
     def update_buttons(self):
-               
+         
+        def obtener_icono(estado):
+                """ Devuelve un icono basado en el estado. """
+                return self.create_colored_dot_icon(QColor(estado))      
         while True:
             
-            
-            def obtener_icono(estado):
-                """ Devuelve un icono basado en el estado. """
-                return self.create_colored_dot_icon(QColor(estado))
+            if self.hora_inicio >= datetime.datetime.now().time() or datetime.datetime.now().time() >= self.hora_fin:
+                
+                if datetime.datetime.now().time() < self.hora_inicio:
+                    tiempo_restante = datetime.datetime.combine(datetime.date.today(), self.hora_inicio) - datetime.datetime.combine(datetime.date.today(), datetime.datetime.now().time())
+                    self.reset_buttons()
+                    sleep(tiempo_restante.total_seconds())
+                else:
+                    
+                    tiempo_restante = datetime.datetime.combine(datetime.date.today() + datetime.timedelta(days=1), self.hora_inicio) - datetime.datetime.combine(datetime.date.today(), datetime.datetime.now().time())
+                    self.reset_buttons()
+                    sleep(tiempo_restante.total_seconds())
+                    
             
             for boton in self.botones:
                     
@@ -407,9 +430,13 @@ class MainWindow(QMainWindow):
                     
                 if test_false:
                     boton.setIcon(obtener_icono("#e74c3c"))
-                    continue
+                    
                     
                 else:
                     boton.setIcon(obtener_icono("#2ecc71"))
-                    continue
+                    
             sleep(900)
+        
+        
+        
+        

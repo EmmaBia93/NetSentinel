@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QApplication,QDialog,QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QFrame
-from PySide6.QtCore import QFile, QTextStream, Qt,QSize, QTimer
+from PySide6.QtCore import QFile, QTextStream, Qt,QSize
 from PySide6.QtGui import QColor,QIcon,QPixmap,QPainter
 import threading
 from time import sleep
@@ -40,6 +40,12 @@ class MainWindow(QMainWindow):
         # Menú de localidades
         menu_frame = QFrame()
         menu_frame.setFrameShape(QFrame.StyledPanel)
+        menu_frame.setStyleSheet("""
+                QFrame {
+                    border: 2px solid #2e86c1; /* Cambia el ancho y el color del borde */
+                    border-radius: 5px;   /* Si quieres esquinas redondeadas */
+                }
+            """)
         menu_layout = QVBoxLayout(menu_frame)
         
         self.ssh_switch = Toggle()
@@ -50,7 +56,19 @@ class MainWindow(QMainWindow):
         self.botones = []
         for localidad in localidades:
             btn = QPushButton(localidad)
-            btn.setFixedHeight(60)  # Hacer los botones más grandes
+            btn.setStyleSheet("""
+                                QPushButton {
+                                    background-color: '#6461b2';
+                                    color: black;
+                                    border: 2px solid #262544;
+                                    border-radius: 5px;
+                                }
+                                QPushButton:hover {
+                                    background-color: '#4b4985';
+                                    color: white;
+                                }
+                            """)
+            btn.setFixedHeight(60)  
             btn.setFixedWidth(200)
             
             
@@ -77,6 +95,12 @@ class MainWindow(QMainWindow):
         
         # Botones superiores
         buttons_frame = QFrame()
+        buttons_frame.setStyleSheet("""
+                QFrame {
+                    border: 2px solid #2e86c1; /* Cambia el ancho y el color del borde */
+                    border-radius: 5px;   /* Si quieres esquinas redondeadas */
+                }
+            """)
         buttons_frame.setFrameShape(QFrame.StyledPanel)
         buttons_layout = QHBoxLayout(buttons_frame)
         btn_funcion = {"Editar":self.edit_selected_row,
@@ -91,6 +115,17 @@ class MainWindow(QMainWindow):
         button_labels = ["Editar", "Borrar", "Nuevo Enlace", "Nuevo Panel", "Backup", "Reiniciar"]
         for label in button_labels:
             btn = QPushButton(label)
+            btn.setStyleSheet("""
+                                QPushButton {
+                                    background-color: '#6461b2';
+                                    color: black;
+                                    border: 2px solid #262544;
+                                }
+                                QPushButton:hover {
+                                    background-color: '#4b4985';
+                                    color: white;
+                                }
+                            """)
             buttons_layout.addWidget(btn)
             btn.clicked.connect(btn_funcion[label])
         

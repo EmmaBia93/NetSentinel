@@ -49,7 +49,30 @@ class EditWindow(QDialog):
 
         # Botones
         self.save_button = QPushButton("Aceptar")
+        self.save_button.setStyleSheet("""
+                                QPushButton {
+                                    background-color: '#28b463';
+                                    color: black;
+                                    border: 2px solid #196f3d;
+                                }
+                                QPushButton:hover {
+                                    background-color: '#1d8348';
+                                    color: white;
+                                }
+                            """)
+        
         self.cancel_button = QPushButton("Cancelar")
+        self.cancel_button.setStyleSheet("""
+                                QPushButton {
+                                    background-color: '#e74c3c';
+                                    color: black;
+                                    border: 2px solid #943126;
+                                }
+                                QPushButton:hover {
+                                    background-color: '#cb4335';
+                                    color: white;
+                                }
+                            """)
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.save_button)
         button_layout.addWidget(self.cancel_button)

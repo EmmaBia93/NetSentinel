@@ -30,6 +30,17 @@ class DialogSuccess(QDialog):
 
         # Botón Aceptar
         accept_button = QPushButton("Aceptar")
+        accept_button.setStyleSheet("""
+                                QPushButton {
+                                    background-color: '#28b463';
+                                    color: black;
+                                    border: 2px solid #196f3d;
+                                }
+                                QPushButton:hover {
+                                    background-color: '#1d8348';
+                                    color: white;
+                                }
+                            """)
         accept_button.setFixedWidth(150)
         accept_button.clicked.connect(self.on_accept)
         button_layout = QHBoxLayout()

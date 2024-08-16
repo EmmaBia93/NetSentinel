@@ -32,10 +32,32 @@ class DeletePanelDialog(QDialog):
 
         # Botones de aceptar y cancelar
         self.accept_button = QPushButton("Eliminar", self)
+        self.accept_button.setStyleSheet("""
+                                QPushButton {
+                                    background-color: '#28b463';
+                                    color: black;
+                                    border: 2px solid #196f3d;
+                                }
+                                QPushButton:hover {
+                                    background-color: '#1d8348';
+                                    color: white;
+                                }
+                            """)
         self.accept_button.clicked.connect(self.accept)
         layout.addWidget(self.accept_button)
 
         self.cancel_button = QPushButton("Cancelar", self)
+        self.cancel_button.setStyleSheet("""
+                                QPushButton {
+                                    background-color: '#e74c3c';
+                                    color: black;
+                                    border: 2px solid #943126;
+                                }
+                                QPushButton:hover {
+                                    background-color: '#cb4335';
+                                    color: white;
+                                }
+                            """)
         self.cancel_button.clicked.connect(self.reject)
         layout.addWidget(self.cancel_button)
 

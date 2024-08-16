@@ -30,6 +30,17 @@ class DialogError(QDialog):
 
         # Botón Aceptar
         accept_button = QPushButton("Aceptar")
+        accept_button.setStyleSheet("""
+                                QPushButton {
+                                    background-color: '#e74c3c';
+                                    color: black;
+                                    border: 2px solid #943126;
+                                }
+                                QPushButton:hover {
+                                    background-color: '#cb4335';
+                                    color: white;
+                                }
+                            """)
         accept_button.setFixedWidth(150)
         accept_button.clicked.connect(self.on_accept)
         button_layout = QHBoxLayout()

@@ -42,6 +42,30 @@ class AuthDialog(QDialog):
         button_layout = QHBoxLayout()
         self.ok_button = QPushButton("Aceptar")
         self.cancel_button = QPushButton("Cancelar")
+        self.ok_button.setMaximumHeight(40)
+        self.cancel_button.setMaximumHeight(40)
+        self.ok_button.setStyleSheet("""
+                                QPushButton {
+                                    background-color: '#28b463';
+                                    color: black;
+                                    border: 2px solid #196f3d;
+                                }
+                                QPushButton:hover {
+                                    background-color: '#1d8348';
+                                    color: white;
+                                }
+                            """)
+        self.cancel_button.setStyleSheet("""
+                                QPushButton {
+                                    background-color: '#e74c3c';
+                                    color: black;
+                                    border: 2px solid #943126;
+                                }
+                                QPushButton:hover {
+                                    background-color: '#cb4335';
+                                    color: white;
+                                }
+                            """)
         button_layout.addStretch()
         button_layout.addWidget(self.ok_button)
         button_layout.addWidget(self.cancel_button)
