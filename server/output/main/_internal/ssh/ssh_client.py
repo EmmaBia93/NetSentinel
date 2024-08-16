@@ -82,10 +82,14 @@ class ComunicationSSH:
             return False
         
         
-    def __info_device(self,ip: str, port: int, username: str, get_pass: str, name_device: str):
+    def __info_device(self,ip: str, port: int, username: str, get_pass: str, name_device: str,tecno:str):
         
-        command = "(((wstalist -p | grep -c \"mac\" ; mca-status | grep uptime | cut -c8- ; mca-status | grep lanSpeed | cut -c10-) | xargs echo -n) | tr \" \" \",\")"
-        
+        if tecno !='AIRFIBER':
+            command = "(((wstalist -p | grep -c \"mac\" ; mca-status | grep uptime | cut -c8- ;mca-status | grep lanSpeed | awk -F'[=M]' '{print $2}')| xargs echo -n)| tr \" \" \", \" )"
+
+        else:
+           command = "(((wstalist -p | grep -c \"mac\" ; mca-status | grep uptime | cut -c8- ; mca-status | ifconfig ath0 | grep txqueuelen | sed 's/.*txqueuelen:\([0-9]*\).*/\\1/') | xargs echo -n) | tr \" \" \",\")"
+
         client = None
         try:
             
@@ -94,14 +98,15 @@ class ComunicationSSH:
             if client:
                 stdin, stdout, stderr = client.exec_command(command=command, timeout=3)
                 
-                output = stdout.read().decode().strip()
-                error = stderr.read().decode().strip()
-                
+                output = stdout.read().decode("utf-8").strip()
+                error = stderr.read().decode("utf-8").strip()
+               
                 # Verificar estado de ejecución del comando
                 code_status = stdout.channel.recv_exit_status()
                 
                 if code_status == 0:
                     results = output.split(",")
+                    
                     if len(results) == 3:
                         
                         return(f"{output},{ip},{name_device}")
@@ -138,12 +143,13 @@ class ComunicationSSH:
         load_dotenv()
         def connection_wrapper(name,ip,tecno):
             
-            if tecno != 'AC':
+            if tecno == 'M5' or tecno =='M2':
                 
-                return self.__info_device(ip,os.getenv('PORT'), os.getenv('UBNT'), os.getenv('PASS_AIRMAX'), name)
+                return self.__info_device(ip,os.getenv('PORT'), os.getenv('UBNT'), os.getenv('PASS_AIRMAX'), name,tecno)
             
             else:
-                return self.__info_device(ip,os.getenv('PORT'), os.getenv('UBNT'), os.getenv('PASS_AC'), name)
+                
+                return self.__info_device(ip,os.getenv('PORT'), os.getenv('UBNT'), os.getenv('PASS_AC'), name,tecno)
             
         
         results = {}
@@ -163,7 +169,7 @@ class ComunicationSSH:
                         "clientes": client_count,
                         "ip": ip,
                         "tiempo": cantidad_horas_activo(uptime),
-                        "velocidad": re.sub(r'\D', '',speed)
+                        "velocidad": speed
                     }
                 except Exception as exc:
                     print(f'Error processing {ip}: {exc}')

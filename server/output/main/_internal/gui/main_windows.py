@@ -1,7 +1,8 @@
 from PySide6.QtWidgets import QApplication,QDialog,QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QFrame
-from PySide6.QtCore import QFile, QTextStream, Qt,QSize
+from PySide6.QtCore import QFile, QTextStream, Qt,QSize, QTimer
 from PySide6.QtGui import QColor,QIcon,QPixmap,QPainter
 import threading
+from time import sleep
 from app.database.manage import get_paneles,update_device,create_device,delete_device,get_enlaces
 from app.icmp.icmp_client import is_device_online
 from  app.ssh.ssh_client import ComunicationSSH
@@ -12,6 +13,7 @@ from app.gui.new_device_windows import NewPanelWindows
 from app.gui.dialog_success import DialogSuccess
 from app.gui.dialog_error  import DialogError
 from app.gui.dialog_auth import AuthDialog
+from app.gui.circle_status import StatusCircle
 import webbrowser
 
 
@@ -23,6 +25,7 @@ class MainWindow(QMainWindow):
         self.setGeometry(100, 100, 1920, 1080)
         self.showMaximized()  # Iniciar en pantalla completa
         self.current_device=""
+        self.count=0
         # Widget central
         #self.setWindowFlags(Qt.FramelessWindowHint)
         central_widget = QWidget()
@@ -42,14 +45,24 @@ class MainWindow(QMainWindow):
         menu_layout.addWidget(self.ssh_switch,Qt.AlignCenter,Qt.AlignHCenter)
         
         localidades = ["Media Agua", "Los Berros", "Colonia", "Cochagual", "Carpinteria","Cañada", "Tres Esquinas","Enlaces"]
+        self.botones = []
         for localidad in localidades:
             btn = QPushButton(localidad)
             btn.setFixedHeight(60)  # Hacer los botones más grandes
             btn.setFixedWidth(200)
-            btn.setIcon(QIcon("C:\\Users\\emmab\\Documents\\PanelesPY\\server\\app\\gui\\img\\point.png"))
-            btn.setIconSize(QSize(20,30))
+            
+            
+            btn.setIconSize(QSize(10,10))
+            
             btn.clicked.connect(lambda checked, loc=localidad: self.load_data(loc))
+            self.botones.append(btn)
             menu_layout.addWidget(btn)
+            
+            
+            
+        ping_thread = threading.Thread(target=self.update_buttons)
+        ping_thread.daemon = True
+        ping_thread.start()
         
         # Expandir botones verticalmente
         menu_layout.addStretch(1)
@@ -109,11 +122,7 @@ class MainWindow(QMainWindow):
 
         right_layout.addWidget(self.table)
         
-        # self.status_bar = QStatusBar()
-        # self.setStatusBar(self.status_bar)
-        # self.client_count_label = QLabel("Clientes Totales: 0")
-        # self.client_count_label.setAlignment(Qt.AlignCenter)
-        # self.status_bar.addPermanentWidget(self.client_count_label)
+        
 
         # Aplicar el tema personalizado si está habilitado
         if useCustomTheme:
@@ -195,14 +204,24 @@ class MainWindow(QMainWindow):
         item.setTextAlignment(Qt.AlignCenter)
         item.setFlags(item.flags() & ~Qt.ItemIsEditable)
         
-        
+        if column == 4:
+            self.speed = text
+        if column == 6:
+            self.tecno = text
+        self.tecnos={"AC":"1000","AIRFIBER":"1000","M2":"100","M5":"100"}
         icon=QIcon()
         if column==7:
             if text == "Online":
-                icon = self.create_colored_dot_icon(QColor(35, 155, 86))
-               
+                if self.ssh_switch.StateButton():
+                    
+                    if self.tecnos[self.tecno] == self.speed:
+                        icon = self.create_colored_dot_icon(QColor("#2ecc71"))
+                    else:
+                        icon = self.create_colored_dot_icon(QColor("#e67e22"))
+                else:
+                    icon = self.create_colored_dot_icon(QColor("#2ecc71"))
             else:
-                icon = self.create_colored_dot_icon(QColor(176, 58, 46))
+                icon = self.create_colored_dot_icon(QColor("#e74c3c"))
 
         if icon:
             item.setIcon(icon)
@@ -360,3 +379,37 @@ class MainWindow(QMainWindow):
             DialogSuccess(self, "Se Realizó el Reinicio con Éxito.").exec()
         else:
             DialogError(self, "No Se pudo realizar el Reinicio.").exec()
+            
+            
+            
+    
+    
+    def update_buttons(self):
+               
+        while True:
+            
+            
+            def obtener_icono(estado):
+                """ Devuelve un icono basado en el estado. """
+                return self.create_colored_dot_icon(QColor(estado))
+            
+            for boton in self.botones:
+                    
+                if boton.text()!="Enlaces":
+                        devices = get_paneles(boton.text())
+                else:
+                        devices = get_enlaces()
+                    
+                ips = [device.ip for device in devices]
+                online_status = is_device_online(ips)
+                    
+                test_false= not all(online_status)
+                    
+                if test_false:
+                    boton.setIcon(obtener_icono("#e74c3c"))
+                    continue
+                    
+                else:
+                    boton.setIcon(obtener_icono("#2ecc71"))
+                    continue
+            sleep(900)

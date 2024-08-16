@@ -39,7 +39,7 @@ class NewPanelWindows(QDialog):
 
         # Agregar items a los combobox
         localidades = ["Media Agua", "Los Berros", "Colonia", "Cochagual", "Cañada", "Tres Esquinas", "Carpinteria"]
-        tecnologias = ["AC", "M5", "M2"]
+        tecnologias = ["AIRFIBER","AC", "M5", "M2"]
         self.localidad_combo.addItems(localidades)
         self.tecnologia_combo.addItems(tecnologias)
 
