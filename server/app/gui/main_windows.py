@@ -72,11 +72,14 @@ class MainWindow(QMainWindow):
                                     color: white;
                                 }
                               QPushButton:checked {
-                                    background-color: #e67e22;
-                                    color: white;
+                                    background-color: #d35400;
+                                    color: black;
+                                    border: 4px solid #6e2c00;
+                                    
                                 }
                                QPushButton::checked:hover{
-                                    background-color: #b0611c;
+                                    background-color: #a04000;
+                                    color: white;
                               } 
                             """)
             btn.setFixedHeight(60)  
@@ -111,14 +114,14 @@ class MainWindow(QMainWindow):
         buttons_frame.setContentsMargins(0,0,0,0)
         buttons_frame.setStyleSheet("""
                 QFrame {
-                    border: 2px solid #2e86c1; /* Cambia el ancho y el color del borde */
-                    border-radius: 5px;   /* Si quieres esquinas redondeadas */
+                    border: 2px solid #2e86c1; 
+                    border-radius: 5px; 
                 }
             """)
         buttons_frame.setFrameShape(QFrame.StyledPanel)
         buttons_layout = QHBoxLayout(buttons_frame)
         btn_funcion = {"Editar":self.edit_selected_row,
-                       "Borrar":self.borrar_device,
+                       "Eliminar":self.borrar_device,
                        "Nuevo Enlace":self.new_enlace,
                        "Nuevo Panel":self.new_panel,
                        "Backup":self.create_backup,
@@ -126,7 +129,7 @@ class MainWindow(QMainWindow):
                        }
         
 
-        button_labels = ["Editar", "Borrar", "Nuevo Enlace", "Nuevo Panel", "Backup", "Reiniciar"]
+        button_labels = ["Editar", "Eliminar", "Nuevo Enlace", "Nuevo Panel", "Backup", "Reiniciar"]
         for label in button_labels:
             btn = QPushButton(label)
             btn.setStyleSheet("""

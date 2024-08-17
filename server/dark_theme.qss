@@ -67,7 +67,7 @@ QPushButton:pressed {
 /*#282a26*/
 QTableWidget {
     background-color: #181920;
-    border: 2px solid #2c3e50;
+    border: 2px solid #2e86c1; 
     font-size:15px;
     font-weight: bold;
     gridline-color: #2c3e50;
