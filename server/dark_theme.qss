@@ -13,13 +13,33 @@ QLabel {
     color:#bd93f9
     
 }
+
+
 QComboBox {
-    color:#bd93f9;
+    color:#dedede;
     background-color: #181920
+    
 }
 QComboBox::placeholder{
-    color:#bd93f9;
+    color:#202020;
 }
+QComboBox::hover {
+    background-color: #2471a3;
+    color: #202020;
+    border: 2px solid #154360;
+}
+
+QComboBox::down-arrow {
+    image: url(app/gui/img/arrow.png);
+    width: 14px;
+    height: 14px;
+}
+QComboBox::down-arrow:on { /* Cuando se despliega la lista */
+    top: 2px; 
+    left: 2px;
+}
+
+
 /* QPushButton settings */
 QPushButton {
     background-color: #44475a;
@@ -28,6 +48,7 @@ QPushButton {
     border-radius: 4px;
     padding: 10px;
     font-size: 20px;
+    font-weight: bold;
 }
 
 
@@ -48,14 +69,15 @@ QTableWidget {
     background-color: #181920;
     border: 2px solid #2c3e50;
     font-size:15px;
+    font-weight: bold;
     gridline-color: #2c3e50;
     color: #f8f8f2;
 }
 
 QHeaderView::section {
-    background-color: #373a48;
-    color: #f8f8f2;
-    font-size:18px;
+    background-color: #2f323d;
+    color: #abb2b9;
+    font-size:17px;
     font-weight: bold;
     padding: 5px;
     border: 1px solid #1c2833;
@@ -64,8 +86,12 @@ QHeaderView::section {
 QTableWidget::item {
     padding: 0;
     text-align: center;  /* Centrar el texto en las celdas */
+
     
 }
+
+ 
+
 
 QIcon{
     padding:15px;
@@ -73,7 +99,7 @@ QIcon{
 
 
 QTableWidget::item:selected {
-    background-color: #4775ad;
+    background-color: #d2b33a;
     color: #181920;
 }
 

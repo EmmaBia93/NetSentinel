@@ -75,6 +75,9 @@ class MainWindow(QMainWindow):
                                     background-color: #e67e22;
                                     color: white;
                                 }
+                               QPushButton::checked:hover{
+                                    background-color: #b0611c;
+                              } 
                             """)
             btn.setFixedHeight(60)  
             btn.setFixedWidth(200)
@@ -100,10 +103,12 @@ class MainWindow(QMainWindow):
         
         # Panel derecho
         right_panel = QWidget()
+        right_panel.setContentsMargins(0,0,0,0)
         right_layout = QVBoxLayout(right_panel)
-        
+        right_layout.setContentsMargins(0,0,0,0)
         # Botones superiores
         buttons_frame = QFrame()
+        buttons_frame.setContentsMargins(0,0,0,0)
         buttons_frame.setStyleSheet("""
                 QFrame {
                     border: 2px solid #2e86c1; /* Cambia el ancho y el color del borde */
@@ -129,12 +134,15 @@ class MainWindow(QMainWindow):
                                     background-color: '#147a93';
                                     color: black;
                                     border: 3px solid #072a32;
+                                    font-size:17px;
                                     border-radius: 10px;
                                 }
                                 QPushButton:hover {
                                     background-color: '#0e5364';
                                     color: white;
                                 }
+                              
+                                
                             """)
             buttons_layout.addWidget(btn)
             btn.clicked.connect(btn_funcion[label])
@@ -144,6 +152,7 @@ class MainWindow(QMainWindow):
         
         # Tabla de paneles
         self.table = QTableWidget()
+
         self.table.setColumnCount(8)
         self.table.verticalHeader().setVisible(False)
         self.table.setHorizontalHeaderLabels(["Nombre", "IP", "Tiempo", "Clientes", "LAN", "Hz","Tec","Estado"])
@@ -291,63 +300,66 @@ class MainWindow(QMainWindow):
         webbrowser.open(url)
 
     def edit_selected_row(self):
-        auth=AuthDialog(self)
+        selected_row = self.table.currentRow()
+        if selected_row < 0:
+            return
+        else:
+            auth=AuthDialog(self)
         
-        if auth.exec_() == QDialog.Accepted:
-            selected_row = self.table.currentRow()
-            if selected_row < 0:
-                return
-
-            data = [
-                self.table.item(selected_row, col).text() if self.table.item(selected_row, col) is not None else "" 
-                for col in range(self.table.columnCount())
-            ]
-
-            edit_dialog = EditWindow(self)
-            edit_dialog.set_data(data)
+            if auth.exec_() == QDialog.Accepted:
             
-            if edit_dialog.exec_() == QDialog.Accepted:
-                new_data = edit_dialog.get_data()
-                request=update_device(new_data[1],new_data[0],new_data[5],new_data[6],self.current_device)
-                if request:
-                    DialogSuccess(self,"Se Actualizó Correctamente!!!").exec()
-                    
-                    for col in range(len(new_data)):
-                        self.set_table_item(selected_row, col, new_data[col])
 
-                else:
-                    DialogError(self,"No Se Pudo Actualizar!!!").exec()
+                data = [
+                    self.table.item(selected_row, col).text() if self.table.item(selected_row, col) is not None else "" 
+                    for col in range(self.table.columnCount())
+                ]
+
+                edit_dialog = EditWindow(self)
+                edit_dialog.set_data(data)
+                
+                if edit_dialog.exec_() == QDialog.Accepted:
+                    new_data = edit_dialog.get_data()
+                    request=update_device(new_data[1],new_data[0],new_data[5],new_data[6],self.current_device)
+                    if request:
+                        DialogSuccess(self,"Se Actualizó Correctamente!!!").exec()
+                        
+                        for col in range(len(new_data)):
+                            self.set_table_item(selected_row, col, new_data[col])
+
+                    else:
+                        DialogError(self,"No Se Pudo Actualizar!!!").exec()
 
         
     
     def borrar_device(self):
-        auth=AuthDialog(self)
-        
-        if auth.exec_() == QDialog.Accepted:
-            selected_row = self.table.currentRow()
-            if selected_row < 0:
-                return
-
-            data = [
-                self.table.item(selected_row, col).text() if self.table.item(selected_row, col) is not None else "" 
-                for col in range(self.table.columnCount())
-            ]
-
-            dialog = DeletePanelDialog(self)
-            dialog.set_data(data)
+        selected_row = self.table.currentRow()
+        if selected_row < 0:
+            return
+        else:
+            auth=AuthDialog(self)
             
-            if dialog.exec():
+            if auth.exec_() == QDialog.Accepted:
                 
-                request=delete_device(data[0],self.current_device)
-                
+                data = [
+                    self.table.item(selected_row, col).text() if self.table.item(selected_row, col) is not None else "" 
+                    for col in range(self.table.columnCount())
+                 ]
 
-                if request:
-                    self.table.removeRow(selected_row)
-                    DialogSuccess(self,"Se Eliminó Correctamente el Dispositivo").exec()
+                dialog = DeletePanelDialog(self)
+                dialog.set_data(data)
+                
+                if dialog.exec():
+                    
+                    request=delete_device(data[0],self.current_device)
+                    
+
+                    if request:
+                        self.table.removeRow(selected_row)
+                        DialogSuccess(self,"Se Eliminó Correctamente el Dispositivo").exec()
+                    else:
+                        DialogError(self,"No Se Pudo Eliminar el Dispositivo").exec()
                 else:
-                    DialogError(self,"No Se Pudo Eliminar el Dispositivo").exec()
-            else:
-                DialogError(self,"Se Canceló la Operación!!!").exec()
+                    DialogError(self,"Se Canceló la Operación!!!").exec()
                 
 
 

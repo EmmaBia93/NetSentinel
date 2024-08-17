@@ -36,7 +36,9 @@ class NewPanelWindows(QDialog):
 
         self.tecnologia_combo = QComboBox()
         self.tecnologia_combo.setFixedHeight(50)
-
+        
+        
+       
         # Agregar items a los combobox
         localidades = ["Media Agua", "Los Berros", "Colonia", "Cochagual", "Cañada", "Tres Esquinas", "Carpinteria"]
         tecnologias = ["AIRFIBER","AC", "M5", "M2"]
@@ -64,8 +66,29 @@ class NewPanelWindows(QDialog):
         # Botones
         self.button_layout = QHBoxLayout()
         self.cancel_button = QPushButton("Cancelar")
+        self.cancel_button.setStyleSheet("""
+                                QPushButton {
+                                    background-color: '#e74c3c';
+                                    color: black;
+                                    border: 2px solid #943126;
+                                }
+                                QPushButton:hover {
+                                    background-color: '#cb4335';
+                                    color: white;
+                                }
+                            """)
         self.load_button = QPushButton("Cargar")
-
+        self.load_button.setStyleSheet("""
+                                QPushButton {
+                                    background-color: '#28b463';
+                                    color: black;
+                                    border: 2px solid #196f3d;
+                                }
+                                QPushButton:hover {
+                                    background-color: '#1d8348';
+                                    color: white;
+                                }
+                            """)
         # Conectar botones a funciones
         self.cancel_button.clicked.connect(self.cancel)
         self.load_button.clicked.connect(self.load)
