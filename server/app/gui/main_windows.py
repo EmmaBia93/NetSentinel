@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QApplication,QDialog,QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QFrame
+from PySide6.QtWidgets import QApplication,QDialog,QMainWindow,QButtonGroup, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QFrame
 from PySide6.QtCore import QFile, QTextStream, Qt,QSize
 from PySide6.QtGui import QColor,QIcon,QPixmap,QPainter
 import threading
@@ -54,17 +54,25 @@ class MainWindow(QMainWindow):
         
         localidades = ["Media Agua", "Los Berros", "Colonia", "Cochagual", "Carpinteria","Cañada", "Tres Esquinas","Enlaces"]
         self.botones = []
+        # Crear un QButtonGroup para gestionar la exclusividad
+        self.button_group = QButtonGroup(self)
+        self.button_group.setExclusive(True)  # Asegura que solo un botón esté presionado a la vez
         for localidad in localidades:
             btn = QPushButton(localidad)
+            btn.setCheckable(True)
             btn.setStyleSheet("""
                                 QPushButton {
-                                    background-color: '#6461b2';
+                                    background-color: '#4b4985';
                                     color: black;
-                                    border: 2px solid #262544;
-                                    border-radius: 5px;
+                                    border: 4px solid #1b1a2e;
+                                    border-radius: 10px;
                                 }
                                 QPushButton:hover {
-                                    background-color: '#4b4985';
+                                    background-color: '#35345c';
+                                    color: white;
+                                }
+                              QPushButton:checked {
+                                    background-color: #e67e22;
                                     color: white;
                                 }
                             """)
@@ -75,6 +83,7 @@ class MainWindow(QMainWindow):
             btn.setIconSize(QSize(10,10))
             
             btn.clicked.connect(lambda checked, loc=localidad: self.load_data(loc))
+            self.button_group.addButton(btn)
             self.botones.append(btn)
             menu_layout.addWidget(btn)
             
@@ -117,12 +126,13 @@ class MainWindow(QMainWindow):
             btn = QPushButton(label)
             btn.setStyleSheet("""
                                 QPushButton {
-                                    background-color: '#6461b2';
+                                    background-color: '#147a93';
                                     color: black;
-                                    border: 2px solid #262544;
+                                    border: 3px solid #072a32;
+                                    border-radius: 10px;
                                 }
                                 QPushButton:hover {
-                                    background-color: '#4b4985';
+                                    background-color: '#0e5364';
                                     color: white;
                                 }
                             """)
@@ -135,7 +145,8 @@ class MainWindow(QMainWindow):
         # Tabla de paneles
         self.table = QTableWidget()
         self.table.setColumnCount(8)
-        self.table.setHorizontalHeaderLabels(["Nombre", "IP", "Tiempo", "Clientes", "LAN", "Hz","Tec","Live?"])
+        self.table.verticalHeader().setVisible(False)
+        self.table.setHorizontalHeaderLabels(["Nombre", "IP", "Tiempo", "Clientes", "LAN", "Hz","Tec","Estado"])
         self.table.horizontalHeader().setSectionResizeMode(7,QHeaderView.Stretch)
         self.table.setColumnWidth(0, 300)
         self.table.setColumnWidth(1, 200)
@@ -153,7 +164,7 @@ class MainWindow(QMainWindow):
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.itemDoubleClicked.connect(self.open_url)
-
+        
        
 
 
@@ -459,6 +470,7 @@ class MainWindow(QMainWindow):
                         devices = get_enlaces()
                     
                 ips = [device.ip for device in devices]
+                
                 online_status = is_device_online(ips)
                     
                 test_false= not all(online_status)

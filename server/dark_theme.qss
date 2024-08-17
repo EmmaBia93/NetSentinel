@@ -2,10 +2,10 @@
 
 /* General settings */
 QWidget {
-    background-color: #282a36;
+    background-color: #181920;
     color: #f8f8f2;
-    font-family: "JetBrains Mono";
-    font-size: 15px;
+    font-family: "Poppins";
+    font-size: 20px;
 }
 
 
@@ -15,7 +15,7 @@ QLabel {
 }
 QComboBox {
     color:#bd93f9;
-    background-color: #282a36
+    background-color: #181920
 }
 QComboBox::placeholder{
     color:#bd93f9;
@@ -39,58 +39,58 @@ QPushButton:hover {
 
 QPushButton:pressed {
     background-color: #bd93f9;
-    color: #282a36;
+    color: #181920;
 }
 
 /* QTableWidget settings */
+/*#282a26*/
 QTableWidget {
-    background-color: #282a36;
-    border: 1px solid #44475a;
+    background-color: #181920;
+    border: 2px solid #2c3e50;
     font-size:15px;
-    gridline-color: #6272a4;
+    gridline-color: #2c3e50;
     color: #f8f8f2;
 }
 
 QHeaderView::section {
-    background-color: #44475a;
+    background-color: #373a48;
     color: #f8f8f2;
     font-size:18px;
     font-weight: bold;
     padding: 5px;
-    border: 1px solid #6272a4;
+    border: 1px solid #1c2833;
 }
 
 QTableWidget::item {
     padding: 0;
-   
     text-align: center;  /* Centrar el texto en las celdas */
     
 }
 
 QIcon{
-    padding:10px;
+    padding:15px;
 }
 
 
 QTableWidget::item:selected {
-    background-color: #bd93f9;
-    color: #282a36;
+    background-color: #4775ad;
+    color: #181920;
 }
 
 
 
 /* QLineEdit settings */
 QLineEdit {
-    background-color: #44475a;
+    background-color: #373a48;
     color: #f8f8f2;
-    border: 1px solid #6272a4;
+    border: 2px solid #2471a3;
     padding: 5px;
     border-radius: 4px;
 }
 
 /* QMainWindow settings */
 QMainWindow {
-    background-color: #282a36;
+    background-color: #1d1f27;
 }
 
 /* QScrollBar settings */
@@ -102,7 +102,7 @@ QScrollBar:vertical {
 QScrollBar::handle:vertical {
     background-color: #6272a4;
     min-height: 20px;
-    border: 1px solid #282a36;
+    border: 1px solid #181920;
 }
 
 QScrollBar::add-line:vertical,
