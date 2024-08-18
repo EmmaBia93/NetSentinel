@@ -29,7 +29,10 @@ class AuthDialog(QDialog):
         # Contraseña
         pass_layout = QHBoxLayout()
         pass_label = QLabel("Contraseña:")
-        pass_label.setAlignment(Qt.AlignRight)
+        pass_label.setAlignment(Qt.AlignCenter)
+        
+
+
         self.pass_input = QLineEdit()
         self.pass_input.setEchoMode(QLineEdit.Password)
         self.pass_input.setFixedWidth(200)

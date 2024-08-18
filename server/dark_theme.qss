@@ -10,8 +10,10 @@ QWidget {
 
 
 QLabel {
-    color:#bd93f9
     
+        font-size: 22px;           
+        font-weight: bold;          
+        color: #ededed;            
 }
 
 
@@ -106,18 +108,55 @@ QTableWidget::item:selected {
 
 
 /* QLineEdit settings */
-QLineEdit {
-    background-color: #373a48;
-    color: #f8f8f2;
-    border: 2px solid #2471a3;
-    padding: 5px;
-    border-radius: 4px;
-}
+ QLineEdit {
+        border: 2px solid #4A90E2;     /* Borde sólido de 2px con color azul */
+        border-radius: 7px;           /* Bordes redondeados */
+        padding: 8px;                  /* Espacio interno */
+        background-color: #1C1C1E;     /* Color de fondo oscuro */
+        color: #FFFFFF;                /* Color del texto blanco */
+        font-size: 20px; 
+        font-weight:bold;              /* Tamaño de la fuente */
+    
+    }
+
+    QLineEdit:hover {
+        border: 2px solid #5AC8FA;     /* Cambio de color del borde al pasar el mouse */
+    }
+
+    QLineEdit:focus {
+        border: 2px solid #007AFF;     /* Color de borde más llamativo al enfocar */
+        background-color: #2C2C2E;     /* Fondo ligeramente más claro al enfocar */
+    }
 
 /* QMainWindow settings */
 QMainWindow {
     background-color: #1d1f27;
 }
+
+
+ QMessageBox QPushButton {
+        background-color: #e74c3c;   /* Fondo de los botones */
+        color: #f8f8f2;              /* Color del texto en los botones */
+        border: 2px solid #78281f;   /* Borde de los botones */
+        border-radius: 5px;          /* Bordes redondeados en los botones */
+        padding: 5px;                /* Espacio interno en los botones */
+        min-width: 80px;             /* Ancho mínimo de los botones */
+    }
+
+    QMessageBox QPushButton:hover {
+        background-color: #b03a2e;   /* Cambio de color de fondo al pasar el mouse */
+    }
+
+    QMessageBox QPushButton:pressed {
+        background-color: #943126;   /* Color de fondo al presionar el botón */
+        color: #2C2C2E;              /* Color del texto al presionar el botón */
+    }
+
+    QMessageBox QPushButton:focus {
+        outline: none;               /* Eliminar el contorno del foco */
+    }
+
+
 
 /* QScrollBar settings */
 QScrollBar:vertical {

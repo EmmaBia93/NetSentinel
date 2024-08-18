@@ -11,7 +11,7 @@ class EditWindow(QDialog):
         self.setFixedSize(400, 600)
         self.data=[]
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 0, 10,20)  # Establecer márgenes
+        
         layout.setSpacing(20) 
         
         # Campos de edición
