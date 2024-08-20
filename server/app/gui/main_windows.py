@@ -298,6 +298,7 @@ class MainWindow(QMainWindow):
         if column==0:
             user_table = UserTable(self.table.item(row, 1).text(),self.table.item(row, 6).text(),self)
             user_table.exec()
+            
            
         elif column == 1:
             data = self.table.item(row, column).text()

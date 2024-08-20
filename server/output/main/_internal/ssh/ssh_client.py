@@ -1,0 +1,183 @@
+import threading as th
+import paramiko
+import os
+from scp import SCPClient
+import concurrent.futures
+from dotenv import load_dotenv
+from tkinter.filedialog import askdirectory
+from app.ssh.tools_aux import cantidad_horas_activo
+import re
+class ComunicationSSH:
+    
+        
+    def __create_ssh_client(self,ip, port, username, password):
+        ssh = paramiko.SSHClient()
+        ssh.load_system_host_keys()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        try:
+            ssh.connect(ip, port=port, username=username, password=password)
+        except paramiko.SSHException as e:
+            print(f"SSH connection error: {e}")
+            raise
+
+        return ssh
+    
+    
+    def backup(self,name:str,ip:str,tecno:str):
+        ruta = askdirectory()
+        load_dotenv()
+        
+        if not ruta:
+            print("No se seleccionó ninguna ruta.")
+            return False
+
+        try:
+            if tecno != 'AC':
+                client = self.__create_ssh_client(ip, os.getenv('PORT'), os.getenv('UBNT'), os.getenv('PASS_AIRMAX'))
+            else:
+                client = self.__create_ssh_client(ip, os.getenv('PORT'), os.getenv('UBNT'), os.getenv('PASS_AC'))
+           
+            local_path = os.path.join(ruta, name.replace(" ", "") + ".cfg")
+                       
+            with SCPClient(client.get_transport()) as scp:
+                scp.get('/var/tmp/system.cfg', local_path)
+        
+            return True
+
+        except paramiko.AuthenticationException as e:
+            print(f"Error de autenticación: {e}")
+            return False
+        except paramiko.SSHException as e:
+            print(f"Error SSH: {e}")
+            return False
+        except OSError as e:
+            print(f"No se pudo realizar la transferencia \nError: {e}")
+            return False
+        except Exception as e:
+            print(f"Error inesperado: {e}")
+            return False
+        finally:
+            client.close()
+
+    
+    def reboot(self, ip: str,tecno:str) -> bool:
+        
+        load_dotenv()
+        try:
+            if tecno != 'AC':
+                client = self.__create_ssh_client(ip, os.getenv('PORT'), os.getenv('UBNT'), os.getenv('PASS_AIRMAX'))
+            else:
+                client = self.__create_ssh_client(ip, os.getenv('PORT'), os.getenv('UBNT'), os.getenv('PASS_AC'))
+            
+            if client:
+                stdin, stdout, stderr = client.exec_command('reboot')
+                client.close()
+                return True
+            else:
+                print("Failed to create SSH client.")
+                return False
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return False
+        
+        
+    def __info_device(self,ip: str, port: int, username: str, get_pass: str, name_device: str,tecno:str):
+        
+        if tecno !='AIRFIBER':
+            command = "(((wstalist -p | grep -c \"mac\" ; mca-status | grep uptime | cut -c8- ;mca-status | grep lanSpeed | awk -F'[=M]' '{print $2}')| xargs echo -n)| tr \" \" \", \" )"
+
+        else:
+           command = "(((wstalist -p | grep -c \"mac\" ; mca-status | grep uptime | cut -c8- ; mca-status | ifconfig ath0 | grep txqueuelen | sed 's/.*txqueuelen:\([0-9]*\).*/\\1/') | xargs echo -n) | tr \" \" \",\")"
+
+        client = None
+        try:
+            
+            client =self.__create_ssh_client(ip=ip, port=port, username=username, password=get_pass)
+           
+            if client:
+                stdin, stdout, stderr = client.exec_command(command=command, timeout=3)
+                
+                output = stdout.read().decode("utf-8").strip()
+                error = stderr.read().decode("utf-8").strip()
+               
+                # Verificar estado de ejecución del comando
+                code_status = stdout.channel.recv_exit_status()
+                
+                if code_status == 0:
+                    results = output.split(",")
+                    
+                    if len(results) == 3:
+                        
+                        return(f"{output},{ip},{name_device}")
+                    else:
+                        return (f"{output},0,{ip},{name_device}")
+                else:
+                    return (f"{error},0,{ip},{name_device}")
+                    
+        except TimeoutError as e:
+            print(f"SSH connection timeout error: {e}")
+        except paramiko.SSHException as e:
+            print(f"SSH connection error: {e}")
+            raise
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+        finally:
+            if client:
+                client.close()
+
+
+    def inicializacion_ssh(self,ips: list) -> dict:
+        """
+        La funcion recibe como parametro una lista de lista, la cual esta compuesta por:
+        Nombre: El nombre del dispositivo.
+        IP: Direccion del dispositivo.
+        Tecnologia: Ya sea AC, M2 o M5.
+        Se debe respetar ese orden al momento de armar la lista.
+
+        Retorna: Un diccionario con la siguiente estructura:
+
+        Nombre:{ "clientes": client_count,"ip": ip,"tiempo": cantidad_horas_activo,"velocidad": speed }
+        
+        """
+        load_dotenv()
+        def connection_wrapper(name,ip,tecno):
+            
+            if tecno == 'M5' or tecno =='M2':
+                
+                return self.__info_device(ip,os.getenv('PORT'), os.getenv('UBNT'), os.getenv('PASS_AIRMAX'), name,tecno)
+            
+            else:
+                
+                return self.__info_device(ip,os.getenv('PORT'), os.getenv('UBNT'), os.getenv('PASS_AC'), name,tecno)
+            
+        
+        results = {}
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(ips)) as executor:
+            future_to_ip = {executor.submit(connection_wrapper,name,ip,tecno): (name,ip,tecno) for name,ip,tecno in ips}
+            
+            for future in concurrent.futures.as_completed(future_to_ip):
+                ip = future_to_ip[future]
+                try:
+                    data = future.result()
+                    split_text = data.split(",")
+                   
+                    client_count, uptime, speed, ip, name = split_text[0], int(split_text[1]), split_text[2], split_text[3], split_text[4]
+                    
+                    results[name] = {
+                        "clientes": client_count,
+                        "ip": ip,
+                        "tiempo": cantidad_horas_activo(uptime),
+                        "velocidad": speed
+                    }
+                except Exception as exc:
+                    print(f'Error processing {ip}: {exc}')
+        
+        return results
+                
+            
+            
+ 
+    
+    

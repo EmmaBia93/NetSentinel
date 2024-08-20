@@ -203,17 +203,80 @@ class ComunicationSSH:
                 code_status = stdout.channel.recv_exit_status()
                 
                 if code_status == 0:
-                    results = output.split(",")
-                    print(results)
-               
+                    result = output.split(",")
+                    
+                    return result
             else:
                 print("Failed to create SSH client.")
-                return False
+                return None
         except Exception as e:
             print(f"An error occurred: {e}")
-            return False
+            return None
         finally:
             client.close()
  
+    def connect_with_fallback(self,ip, username, passwords):
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        
+        for password in passwords:
+            try:
+                ssh.connect(ip, username=username, password=password,port=os.getenv('PORT'))
+                return ssh  # Devuelve la conexión SSH exitosa
+            except paramiko.AuthenticationException:
+                print(f"Autenticación fallida para {ip} con la contraseña {password}")
+            except Exception as e:
+                print(f"Error al conectar con {ip}: {e}")
+                break  # Sal del bucle si ocurre un error diferente
+        return None  # Devuelve None si todas las conexiones fallan
     
     
+    def request_info_with_fallback(self,ip):
+        load_dotenv()
+        username=os.getenv('UBNT')
+        passwords=[os.getenv('PASS_AIRMAX'),os.getenv('PASS_AC')]
+        ssh = self.connect_with_fallback(ip, username, passwords)
+      
+        
+        if ssh is None:
+            return ip, "No se pudo autenticar con ninguna contraseña"
+        
+        try:
+            # Comando para obtener el nombre de usuario
+            stdin, stdout, stderr = ssh.exec_command("mca-status | grep 'deviceName=' | awk -F ',' '{print $1}' | sed 's/M5//g; s/M2//g; s/AC//g' | cut -c 12-")
+            userName = stdout.read().decode('utf-8').strip()
+
+            # Comando para obtener el estado del escaneo
+            stdin, stdout, stderr = ssh.exec_command("cat /tmp/system.cfg | grep 'wireless.1.scan_list.status' | cut -c 29-")
+            scanStatus = stdout.read().decode('utf-8').strip()
+
+            # Comando para obtener la velocidad LAN
+            stdin, stdout, stderr = ssh.exec_command("mca-status | grep 'lanSpeed=' | sed 's/[^0-9]//g'")
+            lanSpeed = stdout.read().decode('utf-8').strip()
+
+            # Concatenar las salidas separadas por comas
+            output = f"{userName},{scanStatus},{lanSpeed},{ip}"
+            return output
+        finally:
+            ssh.close()
+    
+    
+    
+    def request_users(self,ip,tecnologia):
+        ips=self.stations_users(ip,tecnologia)
+        results = []
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(ips)) as executor:
+            futures = {executor.submit(self.request_info_with_fallback, ip): ip for ip in ips}
+
+            for future in concurrent.futures.as_completed(futures):
+                ip = futures[future]
+                try:
+                    data = future.result()
+                    split_text = data.split(",")
+                    username,check_frec,lan,ip_user = split_text[0],split_text[1],split_text[2],split_text[3]
+                    results.append({'name':username,'ip':ip_user,'frequency':check_frec,'speed':lan})
+                except Exception as exc:
+                    print(f'IP {ip} generated an exception: {exc}')
+        
+        return results
