@@ -15,6 +15,7 @@ from app.gui.dialog_success import DialogSuccess
 from app.gui.dialog_error  import DialogError
 from app.gui.dialog_auth import AuthDialog
 from app.gui.circle_status import StatusCircle
+from app.gui.users_windows import UserTable
 import webbrowser
 
 
@@ -175,7 +176,7 @@ class MainWindow(QMainWindow):
         # Hacer las filas seleccionables pero no editables
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
-        self.table.itemDoubleClicked.connect(self.open_url)
+        self.table.cellDoubleClicked.connect(self.event_double)
         
        
 
@@ -290,17 +291,19 @@ class MainWindow(QMainWindow):
         
 
 
-    def open_url(self):
+    def event_double(self,row,column):
         selected_row = self.table.currentRow()
-        if selected_row < 0:
-            return
-        data = [
-            self.table.item(selected_row, col).text() if self.table.item(selected_row, col) is not None else "" 
-            for col in range(self.table.columnCount())
-        ]
-
-        url = f"http://{data[1]}:83"
-        webbrowser.open(url)
+    
+        
+        if column==0:
+            user_table = UserTable(self.table.item(row, 1).text(),self.table.item(row, 6).text(),self)
+            user_table.exec()
+           
+        elif column == 1:
+            data = self.table.item(row, column).text()
+            url = f"http://{data}:83"
+            webbrowser.open(url)
+        
 
     def edit_selected_row(self):
         selected_row = self.table.currentRow()

@@ -177,7 +177,43 @@ class ComunicationSSH:
         return results
                 
             
+    def stations_users(self,ip,tecno):
+        load_dotenv()
+        
+        command = "wstalist | grep 'lastip' | awk '{print $2}' | sed 's/\"/ /g' | sed 's/,//g' | xargs echo -n | tr ' ' ','"
+
+
+        client = None
+        try:
+            if tecno != 'AC':
+                client = self.__create_ssh_client(ip, os.getenv('PORT'), os.getenv('UBNT'), os.getenv('PASS_AIRMAX'))
+            else:
+                client = self.__create_ssh_client(ip, os.getenv('PORT'), os.getenv('UBNT'), os.getenv('PASS_AC'))
+
             
+           
+            if client:
+                
+                stdin, stdout, stderr = client.exec_command(command=command, timeout=3)
+                
+                output = stdout.read().decode("utf-8").strip()
+                error = stderr.read().decode("utf-8").strip()
+               
+                # Verificar estado de ejecución del comando
+                code_status = stdout.channel.recv_exit_status()
+                
+                if code_status == 0:
+                    results = output.split(",")
+                    print(results)
+               
+            else:
+                print("Failed to create SSH client.")
+                return False
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return False
+        finally:
+            client.close()
  
     
     
