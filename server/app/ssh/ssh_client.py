@@ -242,21 +242,40 @@ class ComunicationSSH:
             return ip, "No se pudo autenticar con ninguna contraseña"
         
         try:
-            # Comando para obtener el nombre de usuario
-            stdin, stdout, stderr = ssh.exec_command("mca-status | grep 'deviceName=' | awk -F ',' '{print $1}' | sed 's/M5//g; s/M2//g; s/AC//g' | cut -c 12-")
-            userName = stdout.read().decode('utf-8').strip()
+            comando = """
+                        mca-status | grep 'deviceName=' | awk -F ',' '{print $1}' | sed 's/M5//g; s/M2//g; s/ AC//g' | cut -c 12-;
+                        cat /tmp/system.cfg | grep 'wireless.1.scan_list.status' | cut -c 29-;
+                        mca-status | grep 'lanSpeed=' | sed 's/[^0-9]//g';
+                        mca-status | grep signal | cut -c 9-;
+                        mca-status | grep ccq= | cut -c 5- | awk '{print $1/10}'
+                        """
+            stdin, stdout, stderr = ssh.exec_command(comando)
 
-            # Comando para obtener el estado del escaneo
-            stdin, stdout, stderr = ssh.exec_command("cat /tmp/system.cfg | grep 'wireless.1.scan_list.status' | cut -c 29-")
-            scanStatus = stdout.read().decode('utf-8').strip()
+            
+            output = stdout.read().decode('utf-8').strip().split('\n')
 
-            # Comando para obtener la velocidad LAN
-            stdin, stdout, stderr = ssh.exec_command("mca-status | grep 'lanSpeed=' | sed 's/[^0-9]//g'")
-            lanSpeed = stdout.read().decode('utf-8').strip()
+            
+            userName = output[0]
+            scanStatus = output[1]
+            lanSpeed = output[2]
+            signal = output[3]
+            ccq = f"{float(output[4]):.0f}"
+            
 
-            # Concatenar las salidas separadas por comas
-            output = f"{userName},{scanStatus},{lanSpeed},{ip}"
+
+
+            
+            output = f"{userName},{scanStatus},{lanSpeed},{ip},{signal},{ccq}"
             return output
+        
+        except TimeoutError as e:
+            print(f"SSH connection timeout error: {e}")
+        except paramiko.SSHException as e:
+            print(f"SSH connection error: {e}")
+            raise
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+
         finally:
             ssh.close()
     
@@ -274,8 +293,9 @@ class ComunicationSSH:
                 try:
                     data = future.result()
                     split_text = data.split(",")
-                    username,check_frec,lan,ip_user = split_text[0],split_text[1],split_text[2],split_text[3]
-                    results.append({'name':username,'ip':ip_user,'frequency':check_frec,'speed':lan})
+                    username,check_frec,lan,ip_user,signal,ccq = split_text[0],split_text[1],split_text[2],split_text[3],split_text[4],split_text[5]
+                    
+                    results.append({'name':username,'ip':ip_user,'frequency':check_frec,'speed':lan,'signal':signal,'ccq':ccq})
                 except Exception as exc:
                     print(f'IP {ip} generated an exception: {exc}')
         

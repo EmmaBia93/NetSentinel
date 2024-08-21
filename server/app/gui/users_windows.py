@@ -17,23 +17,60 @@ class UserTable(QDialog):
         # Configurar la tabla
         self.table = QTableWidget()
         self.table.verticalHeader().setVisible(False)
-        self.table.setColumnCount(4)
-        self.table.setHorizontalHeaderLabels(["Nombre", "IP", "Frecuencia", "Cable"])
-        self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Stretch)
-        self.table.setColumnWidth(0, 500)
-        self.table.setColumnWidth(1, 300)
+        self.table.setColumnCount(6)
+        self.table.setHorizontalHeaderLabels(["Nombre", "IP", "Frecuencia", "Cable", "Señal","CCQ"])
+        self.table.horizontalHeader().setSectionResizeMode(5, QHeaderView.Stretch)
+        self.table.setColumnWidth(0, 350)
+        self.table.setColumnWidth(1, 200)
         self.table.setColumnWidth(2, 200)
+        self.table.setColumnWidth(3, 200)
+        self.table.setColumnWidth(4, 200)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         layout.addWidget(self.table)
 
         # Agregar barra de progreso
         self.progress_bar = QProgressBar(self)
-        self.progress_bar.setRange(0, 0)  # Indica un proceso indeterminado
+        self.progress_bar.setFixedHeight(30)  # Altura fija para la barra de progreso
+        self.progress_bar.setStyleSheet("""
+                                QProgressBar {
+                                    border: 3px solid #2c3e50;     /* Borde */
+                                    border-radius: 0px;          /* Esquinas redondeadas */
+                                    background-color: #181920;     /* Color de fondo de la barra */
+                                    text-align: center;            /* Texto centrado */
+                                    font: bold 14px;               /* Estilo del texto */
+                                    color: #2c3e50;                /* Color del texto */
+                                }
+
+                                QProgressBar::chunk {
+                                    border-radius: 10px;           /* Esquinas redondeadas de la parte de progreso */
+                                               
+                                    
+                                    background-color: qlineargradient(
+                                    spread:pad, x1:0, y1:0, x2:1, y2:0,
+                                    stop:0 #1abc9c, stop:1 #16a085);   /* Degradado */
+                                }
+                            """)
+        self.progress_bar.setRange(0, 0)  # Rango normal
         layout.addWidget(self.progress_bar)
 
         # Agregar botón para cerrar el diálogo (opcional)
         close_button = QPushButton("Cerrar")
+        close_button.setStyleSheet("""
+                                QPushButton {
+                                    background-color: '#2980b9';
+                                    color: black;
+                                    border: 4px solid #154360;
+                                    font-size:17px;
+                                    border-radius: 10px;
+                                }
+                                QPushButton:hover {
+                                    background-color: '#1f618d';
+                                    color: white;
+                                }
+                              
+                                
+                            """)
         close_button.clicked.connect(self.accept)  # Cierra el diálogo al hacer clic
         layout.addWidget(close_button)
 
@@ -51,22 +88,40 @@ class UserTable(QDialog):
         for row, user in enumerate(response):
             self.set_table_item(row, 0, user['name'])
             self.set_table_item(row, 1, user['ip'])
-            self.set_table_item(row, 2, user['frequency'], user['frequency'] == 'enabled')
-            self.set_table_item(row, 3, user['speed'] if user['speed'] else 'Desconectado', user['speed'] != '100')
+            self.set_table_item(row, 2, user['frequency'])
+            self.set_table_item(row, 3, user['speed'] if user['speed'] else 'Desconectado')
+            self.set_table_item(row, 4, user['signal'])
+            self.set_table_item(row, 5, user['ccq'])
+            
+
 
         # Ocultar la barra de progreso cuando se complete la carga
         self.progress_bar.setVisible(False)
 
-    def set_table_item(self, row, column, text, highlight=False):
+    def set_table_item(self, row, column, text):
+        dic_colors = {'enabled':'#d35400','disabled':'#2ecc71','Desconectado':'#e74c3c','10':'#e74c3c','100':'#2ecc71'}
         item = QTableWidgetItem(text)
         item.setTextAlignment(Qt.AlignCenter)
         item.setFlags(item.flags() & ~Qt.ItemIsEditable)
         icon = QIcon()
-        if highlight:
-            if column == 2 and text == 'enabled':
-                item.setForeground(QBrush(QColor("#d35400")))
-            elif column == 3 and text == '10':
-                item.setForeground(QBrush(QColor("#e74c3c")))
-            elif column == 3 and text == 'Desconectado':
-                item.setForeground(QBrush(QColor("#e74c3c")))
+        if column == 2 or column == 3:
+            item.setForeground(QBrush(QColor(dic_colors[text])))
+            
+        if column == 4:
+            if int(text) < 68:
+                item.setForeground(QBrush(QColor("#2ecc71")))
+            elif 68 <= int(text) <= 77:
+                item.setForeground(QBrush(QColor("#f1c40f")))
+            else: 
+               item.setForeground(QBrush(QColor("#e74c3c"))) 
+        
+        
+        if column == 5:
+            if int(text) >= 80:
+                item.setForeground(QBrush(QColor("#2ecc71")))
+            elif 60 <= int(text) <= 79:
+                item.setForeground(QBrush(QColor("#f1c40f")))
+            else: 
+               item.setForeground(QBrush(QColor("#e74c3c"))) 
+
         self.table.setItem(row, column, item)

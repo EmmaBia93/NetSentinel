@@ -295,7 +295,7 @@ class MainWindow(QMainWindow):
         selected_row = self.table.currentRow()
     
         
-        if column==0:
+        if column==0 and self.current_device=="Panel":
             user_table = UserTable(self.table.item(row, 1).text(),self.table.item(row, 6).text(),self)
             user_table.exec()
             
