@@ -9,7 +9,7 @@ if __name__ == "__main__":
     
     # Aplicar tema personalizado
     useCustomTheme = True
-    themeFile = "C:\\Users\\emmab\\Documents\\PanelesPY\\server\\dark_theme.qss"
+    themeFile = "C:\\Users\\PC\\repositorio\\PanelesPY\\server\\dark_theme.qss"
     
     window = MainWindow(useCustomTheme, themeFile)
     

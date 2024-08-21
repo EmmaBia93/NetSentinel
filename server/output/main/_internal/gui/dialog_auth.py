@@ -20,8 +20,9 @@ class AuthDialog(QDialog):
         user_label.setAlignment(Qt.AlignRight)
         
         self.user_input = QLineEdit()
-        self.user_input.setFixedWidth(200)
+        self.user_input.setFixedWidth(300)
         self.user_input.setAlignment(Qt.AlignmentFlag.AlignCenter)
+      
         user_layout.addWidget(user_label)
         user_layout.addWidget(self.user_input)
         layout.addLayout(user_layout)
@@ -29,13 +30,13 @@ class AuthDialog(QDialog):
         # Contraseña
         pass_layout = QHBoxLayout()
         pass_label = QLabel("Contraseña:")
-        pass_label.setAlignment(Qt.AlignCenter)
+        pass_label.setAlignment(Qt.AlignRight)
         
 
 
         self.pass_input = QLineEdit()
         self.pass_input.setEchoMode(QLineEdit.Password)
-        self.pass_input.setFixedWidth(200)
+        self.pass_input.setFixedWidth(300)
         self.pass_input.setAlignment(Qt.AlignmentFlag.AlignCenter)
         pass_layout.addWidget(pass_label)
         pass_layout.addWidget(self.pass_input)

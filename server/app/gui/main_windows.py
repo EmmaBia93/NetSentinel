@@ -296,8 +296,11 @@ class MainWindow(QMainWindow):
     
         
         if column==0 and self.current_device=="Panel":
-            user_table = UserTable(self.table.item(row, 1).text(),self.table.item(row, 6).text(),self)
-            user_table.exec()
+            if self.table.item(row, 6).text() != 'AC':
+                user_table = UserTable(self.table.item(row, 1).text(),self.table.item(row, 6).text(),self)
+                user_table.exec()
+            else:
+                DialogError(self,"De momento no esta disponible para AC").exec()
             
            
         elif column == 1:

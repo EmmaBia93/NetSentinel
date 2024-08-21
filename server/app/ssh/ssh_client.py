@@ -248,6 +248,7 @@ class ComunicationSSH:
                         mca-status | grep 'lanSpeed=' | sed 's/[^0-9]//g';
                         mca-status | grep signal | cut -c 9-;
                         mca-status | grep ccq= | cut -c 5- | awk '{print $1/10}'
+                        mca-status | grep distance | awk -F '=' '{print $2}'
                         """
             stdin, stdout, stderr = ssh.exec_command(comando)
 
@@ -260,12 +261,13 @@ class ComunicationSSH:
             lanSpeed = output[2]
             signal = output[3]
             ccq = f"{float(output[4]):.0f}"
+            distance = f"{int(output[5])/1000:.1f} km"
             
 
 
 
             
-            output = f"{userName},{scanStatus},{lanSpeed},{ip},{signal},{ccq}"
+            output = f"{userName},{scanStatus},{lanSpeed},{ip},{signal},{ccq},{distance}"
             return output
         
         except TimeoutError as e:
@@ -293,9 +295,9 @@ class ComunicationSSH:
                 try:
                     data = future.result()
                     split_text = data.split(",")
-                    username,check_frec,lan,ip_user,signal,ccq = split_text[0],split_text[1],split_text[2],split_text[3],split_text[4],split_text[5]
+                    username,check_frec,lan,ip_user,signal,ccq,distance = split_text[0],split_text[1],split_text[2],split_text[3],split_text[4],split_text[5],split_text[6]
                     
-                    results.append({'name':username,'ip':ip_user,'frequency':check_frec,'speed':lan,'signal':signal,'ccq':ccq})
+                    results.append({'name':username,'ip':ip_user,'frequency':check_frec,'speed':lan,'signal':signal,'ccq':ccq,'distance':distance})
                 except Exception as exc:
                     print(f'IP {ip} generated an exception: {exc}')
         
