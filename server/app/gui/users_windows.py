@@ -1,6 +1,8 @@
-from PySide6.QtWidgets import QApplication, QTableWidget, QTableWidgetItem, QVBoxLayout, QDialog, QPushButton, QHeaderView, QLabel, QProgressBar
+from PySide6.QtWidgets import QApplication,QHBoxLayout, QTableWidget, QTableWidgetItem, QVBoxLayout, QDialog, QPushButton, QHeaderView, QLabel, QProgressBar
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QIcon, QBrush
+from app.gui.dialog_success import DialogSuccess
+from app.gui.dialog_error import DialogError
 import sys
 from app.ssh.ssh_client import ComunicationSSH
 import threading
@@ -57,7 +59,9 @@ class UserTable(QDialog):
         self.progress_bar.setRange(0, 0)  # Rango normal
         layout.addWidget(self.progress_bar)
 
-        # Agregar botón para cerrar el diálogo (opcional)
+        button_layout = QHBoxLayout()
+
+        # Agregar botón para cerrar el diálogo
         close_button = QPushButton("Cerrar")
         close_button.setStyleSheet("""
                                 QPushButton {
@@ -71,11 +75,29 @@ class UserTable(QDialog):
                                     background-color: '#1f618d';
                                     color: white;
                                 }
-                              
-                                
                             """)
         close_button.clicked.connect(self.accept)  # Cierra el diálogo al hacer clic
-        layout.addWidget(close_button)
+        button_layout.addWidget(close_button)
+
+        # Agregar botón para reiniciar a todos
+        restart_all_button = QPushButton("Reiniciar a todos")
+        restart_all_button.setStyleSheet("""
+                                QPushButton {
+                                    background-color: '#e74c3c';
+                                    color: black;
+                                    border: 4px solid #c0392b;
+                                    font-size:17px;
+                                    border-radius: 10px;
+                                }
+                                QPushButton:hover {
+                                    background-color: '#c0392b';
+                                    color: white;
+                                }
+                            """)
+        restart_all_button.clicked.connect(self.restart_all_users)
+        button_layout.addWidget(restart_all_button)
+
+        layout.addLayout(button_layout)
 
         # Ejecutar la carga de datos en un hilo separado
         threading.Thread(target=self.load_datatable, args=(ip, tecnologia)).start()
@@ -109,6 +131,7 @@ class UserTable(QDialog):
         item.setTextAlignment(Qt.AlignCenter)
         item.setFlags(item.flags() & ~Qt.ItemIsEditable)
         icon = QIcon()
+        
         if column == 2 or column == 3:
             item.setForeground(QBrush(QColor(dic_colors[text])))
             
@@ -144,6 +167,20 @@ class UserTable(QDialog):
     
     def event_double(self,row,column):
         selected_row = self.table.currentRow()
-        data = self.table.item(row, 1).text()
-        url = f"http://{data}:83"
-        webbrowser.open(url)
+        if column==1:
+            data = self.table.item(row, 1).text()
+            url = f"http://{data}:83"
+            webbrowser.open(url)
+        if column==2 and self.table.item(row, 2).text() == 'enabled':
+            ssh = ComunicationSSH()
+            ip = self.table.item(row, 1).text()
+            response = ssh.desmarcar_frecuencia(ip=ip)
+            if response:
+                DialogSuccess(self,"Se ha desmarcado la frecuencia con exito!!!").exec()
+            else:
+                DialogError(self,"No se ha podido desmarcar la frecuencia").exec()
+        elif column==2 and self.table.item(row, 2).text() == 'disabled':
+            DialogError(self,"Ya esta desmarcada la frecuencia").exec()
+
+    def restart_all_users(self):
+        pass
