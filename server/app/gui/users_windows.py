@@ -3,15 +3,17 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QIcon, QBrush
 from app.gui.dialog_success import DialogSuccess
 from app.gui.dialog_error import DialogError
-import sys
+import os
 from app.ssh.ssh_client import ComunicationSSH
 import threading
 import webbrowser
+from tkinter.filedialog import askdirectory
 
 class UserTable(QDialog):
-    def __init__(self, ip, tecnologia, parent=None):
+    def __init__(self,name ,ip, tecnologia, parent=None):
         super(UserTable, self).__init__(parent)
-        self.setWindowTitle("USUARIOS")
+        self.name=name
+        self.setWindowTitle(name)
         self.setGeometry(100, 100, 1920, 1080)
         self.showMaximized()
 
@@ -61,25 +63,27 @@ class UserTable(QDialog):
 
         button_layout = QHBoxLayout()
 
-        # Agregar botón para cerrar el diálogo
-        close_button = QPushButton("Cerrar")
-        close_button.setStyleSheet("""
-                                QPushButton {
-                                    background-color: '#2980b9';
-                                    color: black;
-                                    border: 4px solid #154360;
-                                    font-size:17px;
-                                    border-radius: 10px;
-                                }
-                                QPushButton:hover {
-                                    background-color: '#1f618d';
-                                    color: white;
-                                }
-                            """)
-        close_button.clicked.connect(self.accept)  # Cierra el diálogo al hacer clic
-        button_layout.addWidget(close_button)
+        backup_button = QPushButton("Respaldar Información")
+        backup_button.setStyleSheet("""
+                                    QPushButton {
+                                        background-color: '#27ae60';
+                                        color: black;
+                                        border: 4px solid #229954;
+                                        font-size:17px;
+                                        border-radius: 10px;
+                                    }
+                                    QPushButton:hover {
+                                        background-color: '#229954';
+                                        color: white;
+                                    }
+                                """)
+        backup_button.clicked.connect(self.backup_user_data)  
+        button_layout.addWidget(backup_button)
+        
+        
+        
 
-        # Agregar botón para reiniciar a todos
+        
         restart_all_button = QPushButton("Reiniciar a todos")
         restart_all_button.setStyleSheet("""
                                 QPushButton {
@@ -96,7 +100,66 @@ class UserTable(QDialog):
                             """)
         restart_all_button.clicked.connect(self.restart_all_users)
         button_layout.addWidget(restart_all_button)
-
+        
+        
+        restart_button = QPushButton("Reiniciar")
+        restart_button.setStyleSheet("""
+                            QPushButton {
+                                background-color: '#f39c12';
+                                color: black;
+                                border: 4px solid #d68910;
+                                font-size:17px;
+                                border-radius: 10px;
+                            }
+                            QPushButton:hover {
+                                background-color: '#d68910';
+                                color: white;
+                            }
+                        """)
+        restart_button.clicked.connect(self.restart_selected_user)  # Conecta a una función para reiniciar el usuario seleccionado
+        button_layout.addWidget(restart_button)
+        
+        
+        backup_button = QPushButton("Backup")
+        backup_button.setStyleSheet("""
+                            QPushButton {
+                                background-color: '#9b59b6';
+                                color: black;
+                                border: 4px solid #512e5f;
+                                font-size:17px;
+                                border-radius: 10px;
+                            }
+                            QPushButton:hover {
+                                background-color: '#76448a';
+                                color: white;
+                            }
+                        """)
+        backup_button.clicked.connect(self.backup_user)  # Conecta a una función para reiniciar el usuario seleccionado
+        button_layout.addWidget(backup_button)
+        
+        
+        
+        
+        
+        close_button = QPushButton("Cerrar")
+        close_button.setStyleSheet("""
+                                QPushButton {
+                                    background-color: '#2980b9';
+                                    color: black;
+                                    border: 4px solid #154360;
+                                    font-size:17px;
+                                    border-radius: 10px;
+                                }
+                                QPushButton:hover {
+                                    background-color: '#1f618d';
+                                    color: white;
+                                }
+                            """)
+        close_button.clicked.connect(self.accept)  
+        button_layout.addWidget(close_button)
+        
+        
+        
         layout.addLayout(button_layout)
 
         # Ejecutar la carga de datos en un hilo separado
@@ -184,3 +247,51 @@ class UserTable(QDialog):
 
     def restart_all_users(self):
         pass
+    
+    def backup_user_data(self):
+        ruta = askdirectory()
+               
+        if not ruta:
+            print("No se seleccionó ninguna ruta.")
+        else:
+            local_path = os.path.join(ruta, self.name.replace(" ", "") + ".txt")
+            with open(local_path, 'w') as archivo:
+                row = self.table.rowCount()
+                for fila in range(row):
+                    datos_fila = []
+                    for columna in [0,1]:
+                        item = self.table.item(fila, columna)
+                        if item is not None:
+                            datos_fila.append(item.text().strip())
+                        else:
+                            datos_fila.append('')  # Si el item está vacío
+                    linea = ','.join(datos_fila)  # Separar datos por comas (puedes cambiar el separador)
+                    archivo.write(linea + '\n')  # Escribir la línea en el archivo
+                linea = f"Cantidad de usuarios {row}"
+                archivo.write(linea + '\n')
+        
+        DialogSuccess(self,"Se ha Creado el Archivo con exito!!!").exec()
+    
+    def restart_selected_user(self):
+        row = self.table.currentRow()
+        if row > 0:
+            nombre = self.table.item(row,0).text()
+            ssh = ComunicationSSH()
+            request = ssh.reboot(self.table.item(row,1).text(),"M5")
+        if request:
+            
+            DialogSuccess(self,f"Se ha reiniciado al Usuario: {nombre.title()}, con exito!!!").exec()
+        else:
+            DialogError(self,f"No se ha podido reiniciar al Usuario: {nombre.title()}").exec()
+    
+    def backup_user(self):
+        row = self.table.currentRow()
+        nombre = self.table.item(row,0).text()
+        if row >0:
+            ssh = ComunicationSSH()
+            request = ssh.backup(nombre,self.table.item(row,1).text(),"M5")
+        if request:
+            nombre = self.table.item(row,0).text()
+            DialogSuccess(self,f"Backup de: {nombre.title()}, con exito!!!").exec()
+        else:
+            DialogError(self,f"No se ha podido realizar el Backup al Usuario: {nombre.title()}").exec()

@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QApplication,QDialog,QMainWindow,QButtonGroup, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QFrame
+from PySide6.QtWidgets import QApplication,QDialog,QLabel,QStatusBar,QMainWindow,QButtonGroup, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QFrame
 from PySide6.QtCore import QFile, QTextStream, Qt,QSize
 from PySide6.QtGui import QColor,QIcon,QPixmap,QPainter
 import threading
@@ -27,6 +27,7 @@ class MainWindow(QMainWindow):
         self.setGeometry(100, 100, 1920, 1080)
         self.showMaximized()  # Iniciar en pantalla completa
         self.current_device=""
+        self.count_client=0
         self.hora_inicio = datetime.time(9, 0)
         self.hora_fin = datetime.time(21, 0) 
         # Widget central
@@ -50,6 +51,7 @@ class MainWindow(QMainWindow):
         menu_layout = QVBoxLayout(menu_frame)
         
         self.ssh_switch = Toggle()
+        self.ssh_switch.toggled.connect(self.toggle_banner)
         
         menu_layout.addWidget(self.ssh_switch,Qt.AlignCenter,Qt.AlignHCenter)
         
@@ -184,12 +186,33 @@ class MainWindow(QMainWindow):
         right_layout.addWidget(self.table)
         
         
+        
+        self.footer_label = QLabel("Cantidad de clientes: ")
+        self.footer_label.setAlignment(Qt.AlignCenter)
+        self.footer_label.setFixedHeight(30)
+        self.footer_label.setStyleSheet("""
+            QLabel {
+                background-color: #2e86c1;
+                color: white;
+                border-radius: 5px;
+                font-size: 14px;
+                padding: 5px;
+            }
+        """)
+        self.footer_label.setVisible(False)
+        right_layout.addWidget(self.footer_label)
+        
+        
 
         # Aplicar el tema personalizado si está habilitado
         if useCustomTheme:
             self.apply_theme(themeFile)
             
-
+    def toggle_banner(self, enabled):
+        """Mostrar u ocultar el banner según el estado de ssh_switch."""
+        self.footer_label.setText("Cantidad de clientes: ")
+        self.footer_label.setVisible(enabled)
+        
     def apply_theme(self, qss_file):
         file = QFile(qss_file)
         if file.open(QFile.ReadOnly | QFile.Text):
@@ -224,7 +247,7 @@ class MainWindow(QMainWindow):
 
        
         ssh_enabled = self.ssh_switch.StateButton()
-        
+        self.count_client=0
         if ssh_enabled:
             conn = ComunicationSSH()
             ssh_data = conn.inicializacion_ssh(devices_ssh)
@@ -244,7 +267,8 @@ class MainWindow(QMainWindow):
             tec = device.tecnologia
             data = ssh_data.get(name, {})
             online = online_status.get(ip, False)
-
+            if data.get("clientes") != '-':
+                self.count_client+=int(data.get("clientes"))
             self.set_table_item(row, 0, name)
             self.set_table_item(row, 1, ip)
             self.set_table_item(row, 2, str(data.get("tiempo", "-")))
@@ -254,7 +278,7 @@ class MainWindow(QMainWindow):
             self.set_table_item(row, 6, tec)
             self.set_table_item(row, 7, "Online" if online else "Offline")
             
-
+        self.footer_label.setText(f"Cantidad de clientes: {self.count_client}")
 
 
 
@@ -297,7 +321,7 @@ class MainWindow(QMainWindow):
         
         if column==0 and self.current_device=="Panel":
             if self.table.item(row, 6).text() != 'AC':
-                user_table = UserTable(self.table.item(row, 1).text(),self.table.item(row, 6).text(),self)
+                user_table = UserTable(self.table.item(row,0).text(),self.table.item(row, 1).text(),self.table.item(row, 6).text(),self)
                 user_table.exec()
             else:
                 DialogError(self,"De momento no esta disponible para AC").exec()
