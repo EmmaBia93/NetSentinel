@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from tkinter.filedialog import askdirectory
 from app.ssh.tools_aux import cantidad_horas_activo
 import re
+import random
 import time
 class ComunicationSSH:
     
@@ -330,4 +331,6 @@ class ComunicationSSH:
             finally:
                 ssh.close()
 
-        
+    def test(self,ip):
+        time.sleep(1)
+        return random.choice([True,False])

@@ -192,8 +192,8 @@ class MainWindow(QMainWindow):
         self.footer_label.setFixedHeight(30)
         self.footer_label.setStyleSheet("""
             QLabel {
-                background-color: #2e86c1;
-                color: white;
+                background-color: #1f3142;
+                color: #dedede;
                 border-radius: 5px;
                 font-size: 14px;
                 padding: 5px;
