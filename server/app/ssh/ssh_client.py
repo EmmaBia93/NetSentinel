@@ -107,6 +107,7 @@ class ComunicationSSH:
                 code_status = stdout.channel.recv_exit_status()
                 
                 if code_status == 0:
+                    
                     results = output.split(",")
                     
                     if len(results) == 3:
@@ -115,7 +116,7 @@ class ComunicationSSH:
                     else:
                         return (f"{output},0,{ip},{name_device}")
                 else:
-                    return (f"{error},0,{ip},{name_device}")
+                    return (f"0,0,0,{ip},{name_device}")
                     
         except TimeoutError as e:
             print(f"SSH connection timeout error: {e}")

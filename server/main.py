@@ -9,8 +9,8 @@ if __name__ == "__main__":
     
     # Aplicar tema personalizado
     useCustomTheme = True
-    themeFile ="C:\\Users\\emmab\\Documents\\PanelesPY\\server\\dark_theme.qss" #Emma
-    #themeFile = "C:\\Users\\PC\\repositorio\\PanelesPY\\server\\dark_theme.qss" #Elias
+    #themeFile ="C:\\Users\\emmab\\Documents\\PanelesPY\\server\\dark_theme.qss" #Emma
+    themeFile = "C:\\Users\\PC\\repositorio\\PanelesPY\\server\\dark_theme.qss" #Elias
     window = MainWindow(useCustomTheme, themeFile)
     
     window.show()

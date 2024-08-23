@@ -192,7 +192,8 @@ class MainWindow(QMainWindow):
         self.footer_label.setFixedHeight(30)
         self.footer_label.setStyleSheet("""
             QLabel {
-                background-color: #1f3142;
+                border:1px solid #2e86c1;
+                background-color: #3498db;
                 color: #dedede;
                 border-radius: 5px;
                 font-size: 14px;
@@ -268,7 +269,7 @@ class MainWindow(QMainWindow):
             data = ssh_data.get(name, {})
             online = online_status.get(ip, False)
             if data.get("clientes") != '-':
-                self.count_client+=int(data.get("clientes"))
+                self.count_client+=int(data.get("clientes",0))
             self.set_table_item(row, 0, name)
             self.set_table_item(row, 1, ip)
             self.set_table_item(row, 2, str(data.get("tiempo", "-")))
@@ -519,8 +520,8 @@ class MainWindow(QMainWindow):
                 
                 online_status = is_device_online(ips)
                     
-                test_false= not all(online_status)
-                    
+                test_false= not all(online_status.values())
+               
                 if test_false:
                     boton.setIcon(obtener_icono("#e74c3c"))
                     
