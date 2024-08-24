@@ -6,9 +6,9 @@ import concurrent.futures
 from dotenv import load_dotenv
 from tkinter.filedialog import askdirectory
 from app.ssh.tools_aux import cantidad_horas_activo
-import re
-import random
 import time
+import json
+import re
 class ComunicationSSH:
     
         
@@ -180,7 +180,7 @@ class ComunicationSSH:
         return results
                 
             
-    def stations_users(self,ip,tecno):
+    def stations_users(self,ip):
         load_dotenv()
         
         command = "wstalist | grep 'lastip' | awk '{print $2}' | sed 's/\"/ /g' | sed 's/,//g' | xargs echo -n | tr ' ' ','"
@@ -188,13 +188,9 @@ class ComunicationSSH:
 
         client = None
         try:
-            if tecno != 'AC':
-                client = self.__create_ssh_client(ip, os.getenv('PORT'), os.getenv('UBNT'), os.getenv('PASS_AIRMAX'))
-            else:
-                client = self.__create_ssh_client(ip, os.getenv('PORT'), os.getenv('UBNT'), os.getenv('PASS_AC'))
-
-            
            
+            client = self.__create_ssh_client(ip, os.getenv('PORT'), os.getenv('UBNT'), os.getenv('PASS_AIRMAX'))
+            
             if client:
                 
                 stdin, stdout, stderr = client.exec_command(command=command, timeout=3)
@@ -236,9 +232,7 @@ class ComunicationSSH:
     
     def request_info_with_fallback(self,ip):
         load_dotenv()
-        username=os.getenv('UBNT')
-        passwords=[os.getenv('PASS_AIRMAX'),os.getenv('PASS_AC')]
-        ssh = self.connect_with_fallback(ip, username, passwords)
+        ssh = self.__create_ssh_client(ip,os.getenv('PORT'),os.getenv('UBNT'),os.getenv('PASS_AIRMAX'))
       
         
         if ssh is None:
@@ -252,6 +246,7 @@ class ComunicationSSH:
                         mca-status | grep signal | cut -c 9-;
                         mca-status | grep ccq= | cut -c 5- | awk '{print $1/10}'
                         mca-status | grep distance | awk -F '=' '{print $2}'
+                        mca-status | grep 'deviceId=' | awk -F ',' '{print $2}'| awk -F '=' '{print $2}'
                         """
             stdin, stdout, stderr = ssh.exec_command(comando)
 
@@ -265,12 +260,13 @@ class ComunicationSSH:
             signal = output[3]
             ccq = f"{float(output[4]):.0f}"
             distance = f"{int(output[5])/1000:.1f} km"
+            mac=output[6]
             
 
 
 
             
-            output = f"{userName},{scanStatus},{lanSpeed},{ip},{signal},{ccq},{distance}"
+            output = f"{userName},{scanStatus},{lanSpeed},{ip},{signal},{ccq},{distance},{mac}"
             return output
         
         except TimeoutError as e:
@@ -286,8 +282,8 @@ class ComunicationSSH:
     
     
     
-    def request_users(self,ip,tecnologia):
-        ips=self.stations_users(ip,tecnologia)
+    def request_users(self,ip):
+        ips=self.stations_users(ip)
         results = []
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(ips)) as executor:
@@ -298,9 +294,9 @@ class ComunicationSSH:
                 try:
                     data = future.result()
                     split_text = data.split(",")
-                    username,check_frec,lan,ip_user,signal,ccq,distance = split_text[0],split_text[1],split_text[2],split_text[3],split_text[4],split_text[5],split_text[6]
+                    username,check_frec,lan,ip_user,signal,ccq,distance, mac = split_text[0],split_text[1],split_text[2],split_text[3],split_text[4],split_text[5],split_text[6],split_text[7]
                     
-                    results.append({'name':username,'ip':ip_user,'frequency':check_frec,'speed':lan,'signal':signal,'ccq':ccq,'distance':distance})
+                    results.append({'name':username,'ip':ip_user,'frequency':check_frec,'speed':lan,'signal':signal,'ccq':ccq,'distance':distance,'mac':mac})
                 except Exception as exc:
                     print(f'IP {ip} generated an exception: {exc}')
         
@@ -332,6 +328,25 @@ class ComunicationSSH:
             finally:
                 ssh.close()
 
-    def test(self,ip):
-        time.sleep(1)
-        return random.choice([True,False])
+    
+    def request_users_AC(self,ip):
+        load_dotenv()
+        results = []
+        client = self.__create_ssh_client(ip,os.getenv('PORT'),os.getenv('UBNT'),os.getenv('PASS_AC'))
+        if client:
+            command = "wstalist |grep \"lastip\""
+            stdin, stdout, stderr = client.exec_command(command=command, timeout=3)
+            output = stdout.read().decode("utf-8").strip()
+            output = json.loads(output)
+            for current in output:
+                ip_address = current['remote']['ipaddr'][0] if "remote" in current and "ipaddr" in current["remote"] else "Desconocido(no AC)"
+                name = re.sub(r'\b(M5|AC)\b', '', current['remote']['hostname']).strip()
+                #time = current['remote']['uptime']
+                distance = f"{int(current['remote']['distance'])/1000:.1f} km"
+                signal = str(current['remote']['signal']).replace('-',"")
+                lan = current['remote']['ethlist'][0]["speed"]
+                mac = current['mac']
+                
+                results.append({'name':name,'ip':ip_address,'frequency':'Desconocido','speed':lan,'signal':signal,'ccq':'100','distance':distance,'mac':mac})
+            
+            return results

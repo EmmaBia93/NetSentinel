@@ -1,15 +1,94 @@
-from PySide6.QtWidgets import QApplication, QTableWidget, QTableWidgetItem, QVBoxLayout, QDialog, QPushButton, QHeaderView, QLabel, QProgressBar
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QApplication,QHBoxLayout, QTableWidget, QTableWidgetItem, QVBoxLayout, QDialog, QPushButton, QHeaderView, QLabel, QProgressBar
+from PySide6.QtCore import Qt,QTimer
 from PySide6.QtGui import QColor, QIcon, QBrush
-import sys
+from app.gui.dialog_success import DialogSuccess
+from app.gui.dialog_error import DialogError
+import os
 from app.ssh.ssh_client import ComunicationSSH
 import threading
 import webbrowser
+from app.gui.dialog_auth import AuthDialog
+from tkinter.filedialog import askdirectory
+from PySide6.QtCore import Qt, QThread, Signal, Slot
+import time
+
+
+class ProgressDialog(QDialog):
+    def __init__(self, parent=None):
+        super(ProgressDialog, self).__init__(parent)
+        self.setWindowTitle("Reiniciando Usuarios")
+        self.setFixedSize(500, 200)
+        layout = QVBoxLayout(self)
+
+        self.label_static = QLabel("Reiniciando usuario:", self)
+        self.label_static.setAlignment(Qt.AlignCenter)
+        self.label_static.setStyleSheet("""
+            QLabel {
+                border: 5px solid #1c2d3d; /* Color del borde */
+                border-radius: 10px;      /* Esquinas redondeadas */
+                
+                background-color: #2f4b67; /* Color de fondo */
+                color: #dedede;           /* Color del texto */
+                font-size: 25px;          /* Tamaño del texto */
+                font-weight: bold;        /* Estilo de la fuente */
+            }
+        """)
+        layout.addWidget(self.label_static)
+
+        self.label_user = QLabel("", self)
+        self.label_user.setAlignment(Qt.AlignCenter)
+        self.label_user.setStyleSheet("font-weight: bold; color: #e74c3c;")  # Ajusta el color y estilo
+        layout.addWidget(self.label_user)
+
+        self.ok_button = QPushButton("Aceptar", self)
+        self.ok_button.setStyleSheet("""
+                                    QPushButton {
+                                        background-color: '#27ae60';
+                                        color: black;
+                                        border: 4px solid #229954;
+                                        font-size:17px;
+                                        border-radius: 10px;
+                                    }
+                                    QPushButton:hover {
+                                        background-color: '#229954';
+                                        color: white;
+                                    }
+                                """)
+        
+        self.ok_button.setVisible(False)
+        self.ok_button.clicked.connect(self.accept)
+        layout.addWidget(self.ok_button, alignment=Qt.AlignCenter)
+        
+
+    @Slot(str)
+    def update_user(self, user_name):
+        self.label_user.setText(user_name)
+        
+    @Slot()
+    def finish(self):
+        self.label_static.setStyleSheet("""
+            QLabel {
+                border: 5px solid #145a32; 
+                border-radius: 10px;     
+                background-color: #27ae60; 
+                color: #dedede;          
+                font-size: 25px;         
+                font-weight: bold;       
+            }
+        """)
+        self.label_static.setText("Reinicio completado")
+        self.label_user.setVisible(False)
+        self.ok_button.setVisible(True)
+        
+       
+    
+
 
 class UserTable(QDialog):
-    def __init__(self, ip, tecnologia, parent=None):
+    def __init__(self,name ,ip, tecnologia, parent=None):
         super(UserTable, self).__init__(parent)
-        self.setWindowTitle("USUARIOS")
+        self.name=name
+        self.setWindowTitle(name)
         self.setGeometry(100, 100, 1920, 1080)
         self.showMaximized()
 
@@ -57,7 +136,86 @@ class UserTable(QDialog):
         self.progress_bar.setRange(0, 0)  # Rango normal
         layout.addWidget(self.progress_bar)
 
-        # Agregar botón para cerrar el diálogo (opcional)
+        button_layout = QHBoxLayout()
+
+        backup_button = QPushButton("Respaldar Información")
+        backup_button.setStyleSheet("""
+                                    QPushButton {
+                                        background-color: '#27ae60';
+                                        color: black;
+                                        border: 4px solid #229954;
+                                        font-size:17px;
+                                        border-radius: 10px;
+                                    }
+                                    QPushButton:hover {
+                                        background-color: '#229954';
+                                        color: white;
+                                    }
+                                """)
+        backup_button.clicked.connect(self.backup_user_data)  
+        button_layout.addWidget(backup_button)
+        
+        
+        
+
+        
+        restart_all_button = QPushButton("Reiniciar a todos")
+        restart_all_button.setStyleSheet("""
+                                QPushButton {
+                                    background-color: '#e74c3c';
+                                    color: black;
+                                    border: 4px solid #c0392b;
+                                    font-size:17px;
+                                    border-radius: 10px;
+                                }
+                                QPushButton:hover {
+                                    background-color: '#c0392b';
+                                    color: white;
+                                }
+                            """)
+        restart_all_button.clicked.connect(self.restart_all_users)
+        button_layout.addWidget(restart_all_button)
+        
+        
+        restart_button = QPushButton("Reiniciar")
+        restart_button.setStyleSheet("""
+                            QPushButton {
+                                background-color: '#f39c12';
+                                color: black;
+                                border: 4px solid #d68910;
+                                font-size:17px;
+                                border-radius: 10px;
+                            }
+                            QPushButton:hover {
+                                background-color: '#d68910';
+                                color: white;
+                            }
+                        """)
+        restart_button.clicked.connect(self.restart_selected_user)  # Conecta a una función para reiniciar el usuario seleccionado
+        button_layout.addWidget(restart_button)
+        
+        
+        backup_button = QPushButton("Backup")
+        backup_button.setStyleSheet("""
+                            QPushButton {
+                                background-color: '#9b59b6';
+                                color: black;
+                                border: 4px solid #512e5f;
+                                font-size:17px;
+                                border-radius: 10px;
+                            }
+                            QPushButton:hover {
+                                background-color: '#76448a';
+                                color: white;
+                            }
+                        """)
+        backup_button.clicked.connect(self.backup_user)  # Conecta a una función para reiniciar el usuario seleccionado
+        button_layout.addWidget(backup_button)
+        
+        
+        
+        
+        
         close_button = QPushButton("Cerrar")
         close_button.setStyleSheet("""
                                 QPushButton {
@@ -71,11 +229,13 @@ class UserTable(QDialog):
                                     background-color: '#1f618d';
                                     color: white;
                                 }
-                              
-                                
                             """)
-        close_button.clicked.connect(self.accept)  # Cierra el diálogo al hacer clic
-        layout.addWidget(close_button)
+        close_button.clicked.connect(self.accept)  
+        button_layout.addWidget(close_button)
+        
+        
+        
+        layout.addLayout(button_layout)
 
         # Ejecutar la carga de datos en un hilo separado
         threading.Thread(target=self.load_datatable, args=(ip, tecnologia)).start()
@@ -109,6 +269,7 @@ class UserTable(QDialog):
         item.setTextAlignment(Qt.AlignCenter)
         item.setFlags(item.flags() & ~Qt.ItemIsEditable)
         icon = QIcon()
+        
         if column == 2 or column == 3:
             item.setForeground(QBrush(QColor(dic_colors[text])))
             
@@ -144,6 +305,96 @@ class UserTable(QDialog):
     
     def event_double(self,row,column):
         selected_row = self.table.currentRow()
-        data = self.table.item(row, 1).text()
-        url = f"http://{data}:83"
-        webbrowser.open(url)
+        if column==1:
+            data = self.table.item(row, 1).text()
+            url = f"http://{data}:83"
+            webbrowser.open(url)
+        if column==2 and self.table.item(row, 2).text() == 'enabled':
+            ssh = ComunicationSSH()
+            ip = self.table.item(row, 1).text()
+            response = ssh.desmarcar_frecuencia(ip=ip)
+            if response:
+                DialogSuccess(self,"Se ha desmarcado la frecuencia con exito!!!").exec()
+            else:
+                DialogError(self,"No se ha podido desmarcar la frecuencia").exec()
+        elif column==2 and self.table.item(row, 2).text() == 'disabled':
+            DialogError(self,"Ya esta desmarcada la frecuencia").exec()
+
+    
+        
+    
+    def restart_all_users(self):
+        # Crear la ventana emergente
+        if self.table.rowCount()>0:
+            sesion = AuthDialog(self)
+            if sesion.exec_() == QDialog.Accepted:
+                self.progress_dialog = ProgressDialog(self)
+                self.progress_dialog.show()
+                threading.Thread(target=self.restart_users_in_thread).start()
+
+    def restart_users_in_thread(self):
+        ssh = ComunicationSSH()
+        for row in range(self.table.rowCount()):
+            user_name = self.table.item(row, 0).text()
+            user_ip = self.table.item(row, 1).text()
+            self.progress_dialog.update_user(user_name)
+            request = ssh.reboot(user_ip, "M5")
+            #request  = ssh.test(user_ip)
+               
+            
+
+        
+        self.progress_dialog.finish()
+
+    
+
+
+    def backup_user_data(self):
+
+        if self.table.rowCount()>0:
+            ruta = askdirectory()
+                
+            if not ruta:
+                print("No se seleccionó ninguna ruta.")
+            else:
+                local_path = os.path.join(ruta, self.name.replace(" ", "") + ".txt")
+                with open(local_path, 'w') as archivo:
+                    row = self.table.rowCount()
+                    for fila in range(row):
+                        datos_fila = []
+                        for columna in [0,1]:
+                            item = self.table.item(fila, columna)
+                            if item is not None:
+                                datos_fila.append(item.text().strip())
+                            else:
+                                datos_fila.append('')  # Si el item está vacío
+                        linea = ','.join(datos_fila)  # Separar datos por comas (puedes cambiar el separador)
+                        archivo.write(linea + '\n')  # Escribir la línea en el archivo
+                    linea = f"Cantidad de usuarios {row}"
+                    archivo.write(linea + '\n')
+            
+            DialogSuccess(self,"Se ha Creado el Archivo con exito!!!").exec()
+    
+    def restart_selected_user(self):
+        row = self.table.currentRow()
+        if row > 0:
+            nombre = self.table.item(row,0).text()
+            ssh = ComunicationSSH()
+            request = ssh.reboot(self.table.item(row,1).text(),"M5")
+        if request:
+            
+            DialogSuccess(self,f"Se ha reiniciado al Usuario: {nombre.title()}, con exito!!!").exec()
+        else:
+            DialogError(self,f"No se ha podido reiniciar al Usuario: {nombre.title()}").exec()
+    
+    def backup_user(self):
+        row = self.table.currentRow()
+        nombre = self.table.item(row,0).text()
+        if row >0:
+            ssh = ComunicationSSH()
+            request = ssh.backup(nombre,self.table.item(row,1).text(),"M5")
+        if request:
+            nombre = self.table.item(row,0).text()
+            DialogSuccess(self,f"Backup de: {nombre.title()}, con exito!!!").exec()
+        else:
+            DialogError(self,f"No se ha podido realizar el Backup al Usuario: {nombre.title()}").exec()

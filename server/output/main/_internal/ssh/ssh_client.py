@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 from tkinter.filedialog import askdirectory
 from app.ssh.tools_aux import cantidad_horas_activo
 import re
+import random
+import time
 class ComunicationSSH:
     
         
@@ -105,6 +107,7 @@ class ComunicationSSH:
                 code_status = stdout.channel.recv_exit_status()
                 
                 if code_status == 0:
+                    
                     results = output.split(",")
                     
                     if len(results) == 3:
@@ -113,7 +116,7 @@ class ComunicationSSH:
                     else:
                         return (f"{output},0,{ip},{name_device}")
                 else:
-                    return (f"{error},0,{ip},{name_device}")
+                    return (f"0,0,0,{ip},{name_device}")
                     
         except TimeoutError as e:
             print(f"SSH connection timeout error: {e}")
@@ -302,3 +305,33 @@ class ComunicationSSH:
                     print(f'IP {ip} generated an exception: {exc}')
         
         return results
+    
+    def desmarcar_frecuencia(self,ip):
+        load_dotenv()
+        ssh = self.__create_ssh_client(ip=ip,port=os.getenv('PORT'),username=os.getenv('UBNT'),password=os.getenv('PASS_AIRMAX'))
+        if ssh:
+            
+            command = "sed -i 's/^wireless.1.scan_list.status=enabled$/wireless.1.scan_list.status=disabled/' /tmp/system.cfg && cfgmtd -wp /etc"
+            command1 = "reboot"
+            try:
+                ssh.exec_command(command=command)
+                time.sleep(2)
+                ssh.exec_command(command=command1)
+                
+                return True
+            except TimeoutError as e:
+                print(f"SSH connection timeout error: {e}")
+                return False
+            except paramiko.SSHException as e:
+                print(f"SSH connection error: {e}")
+                return False
+            
+            except Exception as e:
+                print(f"An unexpected error occurred: {e}")
+                return False
+            finally:
+                ssh.close()
+
+    def test(self,ip):
+        time.sleep(1)
+        return random.choice([True,False])
