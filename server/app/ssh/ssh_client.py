@@ -247,6 +247,7 @@ class ComunicationSSH:
                         mca-status | grep ccq= | cut -c 5- | awk '{print $1/10}'
                         mca-status | grep distance | awk -F '=' '{print $2}'
                         mca-status | grep 'deviceId=' | awk -F ',' '{print $2}'| awk -F '=' '{print $2}'
+                        mca-status | grep "platform=" | grep -o 'platform=[^,]*' | awk -F'=' '{print $2}'
                         """
             stdin, stdout, stderr = ssh.exec_command(comando)
 
@@ -261,12 +262,13 @@ class ComunicationSSH:
             ccq = f"{float(output[4]):.0f}"
             distance = f"{int(output[5])/1000:.1f} km"
             mac=output[6]
+            platform = output[7]
             
 
 
 
             
-            output = f"{userName},{scanStatus},{lanSpeed},{ip},{signal},{ccq},{distance},{mac}"
+            output = f"{userName},{scanStatus},{lanSpeed},{ip},{signal},{ccq},{distance},{mac},{platform}"
             return output
         
         except TimeoutError as e:
@@ -294,9 +296,9 @@ class ComunicationSSH:
                 try:
                     data = future.result()
                     split_text = data.split(",")
-                    username,check_frec,lan,ip_user,signal,ccq,distance, mac = split_text[0],split_text[1],split_text[2],split_text[3],split_text[4],split_text[5],split_text[6],split_text[7]
+                    username,check_frec,lan,ip_user,signal,ccq,distance, mac, platform= split_text[0],split_text[1],split_text[2],split_text[3],split_text[4],split_text[5],split_text[6],split_text[7],split_text[8]
                     
-                    results.append({'name':username,'ip':ip_user,'frequency':check_frec,'speed':lan,'signal':signal,'ccq':ccq,'distance':distance,'mac':mac})
+                    results.append({'name':username,'ip':ip_user,'frequency':check_frec,'speed':lan,'signal':signal,'ccq':ccq,'distance':distance,'mac':mac,'platform':platform})
                 except Exception as exc:
                     print(f'IP {ip} generated an exception: {exc}')
         
@@ -346,7 +348,8 @@ class ComunicationSSH:
                 signal = str(current['remote']['signal']).replace('-',"")
                 lan = current['remote']['ethlist'][0]["speed"]
                 mac = current['mac']
+                platform = current['remote']['platform']
                 
-                results.append({'name':name,'ip':ip_address,'frequency':'Desconocido','speed':lan,'signal':signal,'ccq':'100','distance':distance,'mac':mac})
+                results.append({'name':name,'ip':ip_address,'frequency':'Desconocido','speed':lan,'signal':signal,'ccq':'100','distance':distance,'mac':mac,'platform':platform})
             
             return results

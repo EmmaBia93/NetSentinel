@@ -104,9 +104,10 @@ class UserTable(QDialog):
         self.search_bar.setPlaceholderText("Buscar por nombre...")
         self.search_bar.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.search_bar.setFixedWidth(500)
+        
         self.search_bar.textChanged.connect(self.filter_table)
         top_layout.addWidget(self.search_bar)
-
+        self.search_bar.clearFocus()
         # Botones
         backup_button = QPushButton("Respaldar Información")
         backup_button.setStyleSheet("""
@@ -182,15 +183,15 @@ class UserTable(QDialog):
         # Configurar la tabla
         self.table = QTableWidget()
         self.table.verticalHeader().setVisible(False)
-        self.table.setColumnCount(7)
-        self.table.setHorizontalHeaderLabels(["Nombre", "IP", "Frecuencia", "Cable", "Señal", "CCQ", 'Distancia'])
-        self.table.horizontalHeader().setSectionResizeMode(6, QHeaderView.Stretch)
+        self.table.setColumnCount(8)
+        self.table.setHorizontalHeaderLabels(["Nombre", "IP", "Frecuencia", "Cable", "Señal", "CCQ", 'Distancia','Modelo'])
+        self.table.horizontalHeader().setSectionResizeMode(7, QHeaderView.Stretch)
         self.table.setColumnWidth(0, 320)
         self.table.setColumnWidth(1, 200)
         self.table.setColumnWidth(2, 200)
-        self.table.setColumnWidth(3, 200)
-        self.table.setColumnWidth(4, 200)
-        self.table.setColumnWidth(5, 200)
+        self.table.setColumnWidth(3, 100)
+        self.table.setColumnWidth(4, 100)
+        self.table.setColumnWidth(5, 100)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.cellDoubleClicked.connect(self.event_double)
@@ -235,6 +236,7 @@ class UserTable(QDialog):
                             """)
         close_button.clicked.connect(self.accept)  
         main_layout.addWidget(close_button, alignment=Qt.AlignBottom)
+        self.table.setFocus()
         
         # Ejecutar la carga de datos en un hilo separado
         threading.Thread(target=self.load_datatable, args=(ip, tecnologia)).start()
@@ -265,6 +267,7 @@ class UserTable(QDialog):
             self.set_table_item(row, 4, user['signal'])
             self.set_table_item(row, 5, user['ccq'])
             self.set_table_item(row, 6, user['distance'])
+            self.set_table_item(row, 7, user['platform'])
             
 
 
@@ -312,6 +315,9 @@ class UserTable(QDialog):
                 item.setForeground(QBrush(QColor("#e74c3c")))
         if column == 0:
             item.setForeground(QBrush(QColor("#dedede")))
+        
+        if column == 7:
+            item.setForeground(QBrush(QColor("#3c3cff")))
             
         self.table.setItem(row, column, item)
     

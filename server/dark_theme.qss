@@ -184,7 +184,27 @@ QScrollBar::sub-page:vertical {
 /* QScrollBar horizontal settings */
 QScrollBar:horizontal {
     background-color: #44475a;
-    height: 15px;
+    height: 15px;  /* Ancho de la barra horizontal */
 }
+
+QScrollBar::handle:horizontal {
+    background-color: #6272a4;
+    min-width: 20px;  /* Altura mínima del "handle" */
+    border: 1px solid #181920;
+}
+
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {
+    background-color: #44475a;
+    width: 15px;  /* Alto de las líneas de incremento/decremento */
+}
+
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal {
+    background-color: #44475a;
+}
+
+
+
 
 QScrollBar

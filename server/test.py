@@ -2,6 +2,10 @@ import paramiko
 from dotenv import load_dotenv
 import json
 import re
+from scp import SCPClient,SCPException
+import os
+from tkinter.filedialog import askopenfilename
+from time import sleep
 
 def __create_ssh_client(ip, port, username, password):
     ssh = paramiko.SSHClient()
@@ -18,18 +22,28 @@ def __create_ssh_client(ip, port, username, password):
 
 
 load_dotenv()
-ssh = __create_ssh_client("10.107.0.4",23,"ubnt","628819872cia")
-command = "wstalist |grep \"lastip\""
-stdin, stdout, stderr = ssh.exec_command(command=command, timeout=3)
-output = stdout.read().decode("utf-8").strip()
-output = json.loads(output)
+path = askopenfilename()
+dir_name, file_name = os.path.split(path)
+base_name, ext = os.path.splitext(file_name)
+new_name="fwupdate"
+new_file_path = os.path.join(dir_name, new_name + ext)
 
-for current in output:
-    ip_address = current['remote']['ipaddr'][0] if "remote" in current and "ipaddr" in current["remote"] else "Desconocido"
-    name = re.sub(r'\b(M5|AC)\b', '', current['remote']['hostname']).strip()
-    time = current['remote']['uptime']
-    distance = current['remote']['distance']
-    signal = current['remote']['signal']
-    lan = current['remote']['ethlist'][0]["speed"]
-    
-    print(f"{name},{ip_address},{time},{distance},{signal},{lan}")
+try:
+    os.rename(path, new_file_path)
+except Exception as e:
+    print("No se pudo")
+
+try:
+
+    client = __create_ssh_client("10.104.1.102",os.getenv('PORT'),os.getenv('UBNT'),os.getenv('PASS_AIRMAX'))
+    with SCPClient(client.get_transport()) as scp:
+        scp.put(new_file_path, '/tmp/fwupdate.bin')
+        sleep(3)
+        client.exec_command("/sbin/fwupdate -m")
+except SCPException as e:
+    print(f"Error al transferir el archivo: {e}")
+except Exception as e:
+    print(f"Error inesperado: {e}")
+finally:
+    # Cerrar la conexión SSH
+    client.close()
