@@ -451,17 +451,18 @@ class UserTable(QDialog):
     
     def backup_user(self):
         row = self.table.currentRow()
-        nombre = self.table.item(row,0).text()
         
         if row >0 and self.table.item(row,1).text() != 'N/A':
+            
+            nombre = self.table.item(row,0).text()
             ssh = ComunicationSSH()
             tecno = 'AIRMAX' if not 'AC' in self.table.item(row,7).text() else 'AC'
             request = ssh.backup(nombre,self.table.item(row,1).text(),tecno)
-        if request:
-            nombre = self.table.item(row,0).text()
-            DialogSuccess(self,f"Backup de: {nombre.title()}, con exito!!!").exec()
-        else:
-            DialogError(self,f"No se ha podido realizar el Backup al Usuario: {nombre.title()}").exec()
+            if request:
+                nombre = self.table.item(row,0).text()
+                DialogSuccess(self,f"Backup de: {nombre.title()}, con exito!!!").exec()
+            else:
+                DialogError(self,f"No se ha podido realizar el Backup al Usuario: {nombre.title()}").exec()
     
     def sortColumn(self, column):
         # Lista de columnas que pueden ser ordenadas
