@@ -245,7 +245,7 @@ class ComunicationSSH:
             for current in output:
                 ip_address = current.get('lastip', '')
 
-                name = re.sub(r'\b(M2|M5|AC)\b|\B(M2|M5|AC)', '', current.get('remote', {}).get('hostname', '')).strip() or '-'
+                name = re.sub(r'\b(M2|M5|AC)\b|\B(M2|M5)', '', current.get('remote', {}).get('hostname', '')).strip() or '-'
                 
                 distance = f"{int(current.get('remote', {}).get('distance', 0)) / 1000:.1f} km"
                 
@@ -258,6 +258,8 @@ class ComunicationSSH:
                 platform = current.get('remote', {}).get('platform', 'Demasiado Vieja')
                 
                 ccq = current.get('ccq', '100')
+                
+                uptime = current.get('remote', {}).get('uptime', '0')
                 
                 if ip_address != "0.0.0.0":
                     password_client = os.getenv('PASS_AIRMAX') if not '5AC' in platform else os.getenv('PASS_AC')
@@ -274,7 +276,8 @@ class ComunicationSSH:
                     'ccq': ccq,
                     'distance': distance,
                     'mac': mac,
-                    'platform': platform
+                    'platform': platform,
+                    'uptime':cantidad_horas_activo(int(uptime))
                 })
         
         for future in as_completed(futures):

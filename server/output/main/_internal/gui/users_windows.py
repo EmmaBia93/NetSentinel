@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QApplication,QHBoxLayout, QTableWidget, QTableWidgetItem, QVBoxLayout, QDialog, QPushButton, QHeaderView, QLabel, QProgressBar
+from PySide6.QtWidgets import QApplication,QWidget,QHBoxLayout,QFrame,QLineEdit, QTableWidget, QTableWidgetItem, QVBoxLayout, QDialog, QPushButton, QHeaderView, QLabel, QProgressBar
 from PySide6.QtCore import Qt,QTimer
 from PySide6.QtGui import QColor, QIcon, QBrush
 from app.gui.dialog_success import DialogSuccess
@@ -11,7 +11,8 @@ from app.gui.dialog_auth import AuthDialog
 from tkinter.filedialog import askdirectory
 from PySide6.QtCore import Qt, QThread, Signal, Slot
 import time
-
+import pyperclip
+import re
 
 class ProgressDialog(QDialog):
     def __init__(self, parent=None):
@@ -85,31 +86,129 @@ class ProgressDialog(QDialog):
 
 
 class UserTable(QDialog):
-    def __init__(self,name ,ip, tecnologia, parent=None):
+    def __init__(self, name, ip, tecnologia, parent=None):
         super(UserTable, self).__init__(parent)
-        self.name=name
+        self.name = name
         self.setWindowTitle(name)
         self.setGeometry(100, 100, 1920, 1080)
         self.showMaximized()
 
-        layout = QVBoxLayout(self)
+        main_layout = QVBoxLayout(self)
+
+        # Frame para la barra de búsqueda y los botones
+        top_frame = QWidget()
+        
+        top_frame.setStyleSheet("""
+            QWidget {
+                border: 2px solid #2e86c1;
+                border-radius: 10px;
+                padding: 10px;
+            }
+        """)
+        top_layout = QHBoxLayout(top_frame)
+        # Barra de búsqueda
+        self.search_bar = QLineEdit(self)
+        self.search_bar.setPlaceholderText("Buscar por nombre...")
+        self.search_bar.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.search_bar.setFixedWidth(500)
+        
+        
+        self.search_bar.textChanged.connect(self.filter_table)
+        top_layout.addWidget(self.search_bar)
+        
+        
+        # Botones
+        backup_button = QPushButton("Respaldar Información")
+        backup_button.setStyleSheet("""
+                                    QPushButton {
+                                        background-color: '#27ae60';
+                                        color: black;
+                                        border: 4px solid #229954;
+                                        font-size:17px;
+                                        border-radius: 10px;
+                                    }
+                                    QPushButton:hover {
+                                        background-color: '#229954';
+                                        color: white;
+                                    }
+                                """)
+        
+        backup_button.clicked.connect(self.backup_user_data)  
+        top_layout.addWidget(backup_button)
+
+        restart_all_button = QPushButton("Reiniciar a todos")
+        restart_all_button.setStyleSheet("""
+                                QPushButton {
+                                    background-color: '#e74c3c';
+                                    color: black;
+                                    border: 4px solid #c0392b;
+                                    font-size:17px;
+                                    border-radius: 10px;
+                                }
+                                QPushButton:hover {
+                                    background-color: '#c0392b';
+                                    color: white;
+                                }
+                            """)
+        restart_all_button.clicked.connect(self.restart_all_users)
+        top_layout.addWidget(restart_all_button)
+
+        restart_button = QPushButton("Reiniciar")
+        restart_button.setStyleSheet("""
+                            QPushButton {
+                                background-color: '#f39c12';
+                                color: black;
+                                border: 4px solid #d68910;
+                                font-size:17px;
+                                border-radius: 10px;
+                            }
+                            QPushButton:hover {
+                                background-color: '#d68910';
+                                color: white;
+                            }
+                        """)
+        restart_button.clicked.connect(self.restart_selected_user)
+        top_layout.addWidget(restart_button)
+
+        backup_button = QPushButton("Backup")
+        backup_button.setStyleSheet("""
+                            QPushButton {
+                                background-color: '#9b59b6';
+                                color: black;
+                                border: 4px solid #512e5f;
+                                font-size:17px;
+                                border-radius: 10px;
+                            }
+                            QPushButton:hover {
+                                background-color: '#76448a';
+                                color: white;
+                            }
+                        """)
+        backup_button.clicked.connect(self.backup_user)  
+        top_layout.addWidget(backup_button)
+
+        main_layout.addWidget(top_frame)
 
         # Configurar la tabla
         self.table = QTableWidget()
+        
         self.table.verticalHeader().setVisible(False)
-        self.table.setColumnCount(7)
-        self.table.setHorizontalHeaderLabels(["Nombre", "IP", "Frecuencia", "Cable", "Señal","CCQ",'Distancia'])
-        self.table.horizontalHeader().setSectionResizeMode(6, QHeaderView.Stretch)
+        self.table.setColumnCount(9)
+        self.table.setHorizontalHeaderLabels(["Nombre", "IP", "Frecuencia", "Cable", "Señal", "CCQ", 'Distancia','Activo','Modelo'])
+        self.table.horizontalHeader().setSectionResizeMode(8, QHeaderView.Stretch)
         self.table.setColumnWidth(0, 320)
         self.table.setColumnWidth(1, 200)
-        self.table.setColumnWidth(2, 200)
-        self.table.setColumnWidth(3, 200)
-        self.table.setColumnWidth(4, 200)
-        self.table.setColumnWidth(5, 200)
+        self.table.setColumnWidth(2, 150)
+        self.table.setColumnWidth(3, 100)
+        self.table.setColumnWidth(4, 100)
+        self.table.setColumnWidth(5, 100)
+        self.table.setColumnWidth(6, 120)
+        self.table.setColumnWidth(7, 200)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.cellDoubleClicked.connect(self.event_double)
-        layout.addWidget(self.table)
+        self.table.horizontalHeader().sectionClicked.connect(self.sortColumn)
+        main_layout.addWidget(self.table)
 
         # Agregar barra de progreso
         self.progress_bar = QProgressBar(self)
@@ -126,96 +225,14 @@ class UserTable(QDialog):
 
                                 QProgressBar::chunk {
                                     border-radius: 10px;           /* Esquinas redondeadas de la parte de progreso */
-                                               
-                                    
                                     background-color: qlineargradient(
                                     spread:pad, x1:0, y1:0, x2:1, y2:0,
                                     stop:0 #1abc9c, stop:1 #16a085);   /* Degradado */
                                 }
                             """)
         self.progress_bar.setRange(0, 0)  # Rango normal
-        layout.addWidget(self.progress_bar)
+        main_layout.addWidget(self.progress_bar)
 
-        button_layout = QHBoxLayout()
-
-        backup_button = QPushButton("Respaldar Información")
-        backup_button.setStyleSheet("""
-                                    QPushButton {
-                                        background-color: '#27ae60';
-                                        color: black;
-                                        border: 4px solid #229954;
-                                        font-size:17px;
-                                        border-radius: 10px;
-                                    }
-                                    QPushButton:hover {
-                                        background-color: '#229954';
-                                        color: white;
-                                    }
-                                """)
-        backup_button.clicked.connect(self.backup_user_data)  
-        button_layout.addWidget(backup_button)
-        
-        
-        
-
-        
-        restart_all_button = QPushButton("Reiniciar a todos")
-        restart_all_button.setStyleSheet("""
-                                QPushButton {
-                                    background-color: '#e74c3c';
-                                    color: black;
-                                    border: 4px solid #c0392b;
-                                    font-size:17px;
-                                    border-radius: 10px;
-                                }
-                                QPushButton:hover {
-                                    background-color: '#c0392b';
-                                    color: white;
-                                }
-                            """)
-        restart_all_button.clicked.connect(self.restart_all_users)
-        button_layout.addWidget(restart_all_button)
-        
-        
-        restart_button = QPushButton("Reiniciar")
-        restart_button.setStyleSheet("""
-                            QPushButton {
-                                background-color: '#f39c12';
-                                color: black;
-                                border: 4px solid #d68910;
-                                font-size:17px;
-                                border-radius: 10px;
-                            }
-                            QPushButton:hover {
-                                background-color: '#d68910';
-                                color: white;
-                            }
-                        """)
-        restart_button.clicked.connect(self.restart_selected_user)  # Conecta a una función para reiniciar el usuario seleccionado
-        button_layout.addWidget(restart_button)
-        
-        
-        backup_button = QPushButton("Backup")
-        backup_button.setStyleSheet("""
-                            QPushButton {
-                                background-color: '#9b59b6';
-                                color: black;
-                                border: 4px solid #512e5f;
-                                font-size:17px;
-                                border-radius: 10px;
-                            }
-                            QPushButton:hover {
-                                background-color: '#76448a';
-                                color: white;
-                            }
-                        """)
-        backup_button.clicked.connect(self.backup_user)  # Conecta a una función para reiniciar el usuario seleccionado
-        button_layout.addWidget(backup_button)
-        
-        
-        
-        
-        
         close_button = QPushButton("Cerrar")
         close_button.setStyleSheet("""
                                 QPushButton {
@@ -231,25 +248,31 @@ class UserTable(QDialog):
                                 }
                             """)
         close_button.clicked.connect(self.accept)  
-        button_layout.addWidget(close_button)
+        main_layout.addWidget(close_button, alignment=Qt.AlignBottom)
         
+        self.table.setFocusPolicy(Qt.NoFocus)
+        self.setFocus()
         
-        
-        layout.addLayout(button_layout)
-
         # Ejecutar la carga de datos en un hilo separado
         threading.Thread(target=self.load_datatable, args=(ip, tecnologia)).start()
+
+    def filter_table(self, text):
+        for row in range(self.table.rowCount()):
+            item = self.table.item(row, 0)
+            self.table.setRowHidden(row, text.lower() not in item.text().lower())
+
 
     
 
     def load_datatable(self, ip, tecnologia):
         ssh = ComunicationSSH()
         
-        response = ssh.request_users(ip, tecnologia)
-        self.table.setRowCount(len(response))
+        self.response = ssh.request_client(ip,tecnologia)
+        self.table.setRowCount(len(self.response))
+        
         
         # Rellenar la tabla con datos de SSH
-        for row, user in enumerate(response):
+        for row, user in enumerate(self.response):
             self.set_table_item(row, 0, user['name'])
             self.set_table_item(row, 1, user['ip'])
             self.set_table_item(row, 2, user['frequency'])
@@ -257,6 +280,8 @@ class UserTable(QDialog):
             self.set_table_item(row, 4, user['signal'])
             self.set_table_item(row, 5, user['ccq'])
             self.set_table_item(row, 6, user['distance'])
+            self.set_table_item(row, 7, user['uptime'])
+            self.set_table_item(row, 8, user['platform'])
             
 
 
@@ -264,63 +289,96 @@ class UserTable(QDialog):
         self.progress_bar.setVisible(False)
 
     def set_table_item(self, row, column, text):
-        dic_colors = {'enabled':'#d35400','disabled':'#2ecc71','Desconectado':'#e74c3c','10':'#e74c3c','100':'#2ecc71'}
+        text = str(text)
+        dic_colors = {
+            'enabled': '#d35400', 'Desconocido': '#506fad',
+            'disabled': '#2ecc71', 'Desconectado': '#e74c3c',
+            '10': '#e74c3c', '100': '#2ecc71'
+        }
+
         item = QTableWidgetItem(text)
         item.setTextAlignment(Qt.AlignCenter)
         item.setFlags(item.flags() & ~Qt.ItemIsEditable)
-        icon = QIcon()
+
+        def set_color(color):
+            item.setForeground(QBrush(QColor(color)))
+
         
-        if column == 2 or column == 3:
-            item.setForeground(QBrush(QColor(dic_colors[text])))
-            
-        if column == 4:
-            if int(text) < 68:
-                item.setForeground(QBrush(QColor("#2ecc71")))
-            elif 68 <= int(text) <= 77:
-                item.setForeground(QBrush(QColor("#f1c40f")))
-            else: 
-               item.setForeground(QBrush(QColor("#e74c3c"))) 
-        
-        
-        if column == 5:
-            if int(text) >= 75:
-                item.setForeground(QBrush(QColor("#2ecc71")))
-            elif 60 <= int(text) <= 74:
-                item.setForeground(QBrush(QColor("#f1c40f")))
-            else: 
-               item.setForeground(QBrush(QColor("#e74c3c"))) 
-        
-        if column == 6:
-            distancia = float(text.replace("km", "").strip())
-            if distancia <= 2.0:
-                item.setForeground(QBrush(QColor("#2ecc71")))
-            elif distancia > 2.0 and distancia<=3.0:
-                item.setForeground(QBrush(QColor("#f1c40f")))
+        color_mapping = {
+            0: lambda: set_color("#dedede"),
+            1: lambda: set_color("#e74c3c") if text == 'N/A' else None,
+            2: lambda: set_color(dic_colors.get(text, "#000000")),
+            3: lambda: set_color(dic_colors.get(text, "#000000")),
+            4: lambda: set_color("#2ecc71") if int(text) < 68 else set_color("#f1c40f") if int(text) <= 77 else set_color("#e74c3c"),
+            5: lambda: set_color("#2ecc71") if int(text) >= 75 else set_color("#f1c40f") if int(text) >= 60 else set_color("#e74c3c"),
+            6: lambda: set_color("#2ecc71") if float(text.replace("km", "").strip()) <= 2.0 else set_color("#f1c40f") if float(text.replace("km", "").strip()) <= 3.0 else set_color("#e74c3c"),
+            7: lambda: process_days_column(text),
+            8: lambda: set_color("#82a7f5")
+        }
+
+        def process_days_column(text):
+            match = re.match(r'(\d+)\sdía[s]?\s\d{2}:\d{2}:\d{2}', text)
+            if match:
+                days = int(match.group(1))
+                if days < 15:
+                    set_color("#2ecc71")
+                elif 15 <= days <= 25:
+                    set_color("#f1c40f")
+                else:
+                    set_color("#e74c3c")
             else:
-                item.setForeground(QBrush(QColor("#e74c3c")))
-        if column in [0,1]:
-            item.setForeground(QBrush(QColor("#dedede")))
-            
+                set_color("#2ecc71")
+
+        color_mapping.get(column, lambda: None)()
+
         self.table.setItem(row, column, item)
-    
-    def event_double(self,row,column):
-        selected_row = self.table.currentRow()
-        if column==1:
-            data = self.table.item(row, 1).text()
+
+
+    def event_double(self, row, column):
+        def open_url(data):
             url = f"http://{data}:83"
             webbrowser.open(url)
-        if column==2 and self.table.item(row, 2).text() == 'enabled':
-            ssh = ComunicationSSH()
+        
+        def show_dialog(dialog_type, message):
+            dialog = dialog_type(self, message)
+            dialog.exec()
+        
+        def handle_mac_column():
+            pyperclip.copy(self.response[row]['mac'])
+        
+        def handle_ip_column():
+            data = self.table.item(row, 1).text()
+            if data != 'N/A':
+                open_url(data)
+        
+        def handle_status_column():
+            status = self.table.item(row, 2).text()
             ip = self.table.item(row, 1).text()
-            response = ssh.desmarcar_frecuencia(ip=ip)
-            if response:
-                DialogSuccess(self,"Se ha desmarcado la frecuencia con exito!!!").exec()
-            else:
-                DialogError(self,"No se ha podido desmarcar la frecuencia").exec()
-        elif column==2 and self.table.item(row, 2).text() == 'disabled':
-            DialogError(self,"Ya esta desmarcada la frecuencia").exec()
+            ssh = ComunicationSSH()
 
-    
+            if status == 'enabled':
+                response = ssh.desmarcar_frecuencia(ip=ip)
+                if response:
+                    show_dialog(DialogSuccess, "Se ha desmarcado la frecuencia con éxito!!!")
+                else:
+                    show_dialog(DialogError, "No se ha podido desmarcar la frecuencia")
+            elif status == 'disabled':
+                show_dialog(DialogError, "Ya está desmarcada la frecuencia")
+        
+        
+        column_actions = {
+            0: handle_mac_column,
+            1: handle_ip_column,
+            2: handle_status_column
+        }
+
+        
+        action = column_actions.get(column)
+        if action:
+            action()
+
+
+        
         
     
     def restart_all_users(self):
@@ -338,8 +396,11 @@ class UserTable(QDialog):
             user_name = self.table.item(row, 0).text()
             user_ip = self.table.item(row, 1).text()
             self.progress_dialog.update_user(user_name)
-            request = ssh.reboot(user_ip, "M5")
-            #request  = ssh.test(user_ip)
+            if self.table.item(row,1).text() != 'N/A':
+                tecno = 'AIRMAX' if not 'AC' in self.table.item(row,7).text() else 'AC'
+                request = ssh.reboot(user_ip, tecno)
+            else:
+                pass
                
             
 
@@ -377,10 +438,11 @@ class UserTable(QDialog):
     
     def restart_selected_user(self):
         row = self.table.currentRow()
-        if row > 0:
+        if row > 0 and self.table.item(row,1).text() != 'N/A':
             nombre = self.table.item(row,0).text()
+            tecno = 'AIRMAX' if not 'AC' in self.table.item(row,7).text() else 'AC'
             ssh = ComunicationSSH()
-            request = ssh.reboot(self.table.item(row,1).text(),"M5")
+            request = ssh.reboot(self.table.item(row,1).text(),tecno)
         if request:
             
             DialogSuccess(self,f"Se ha reiniciado al Usuario: {nombre.title()}, con exito!!!").exec()
@@ -390,11 +452,24 @@ class UserTable(QDialog):
     def backup_user(self):
         row = self.table.currentRow()
         nombre = self.table.item(row,0).text()
-        if row >0:
+        
+        if row >0 and self.table.item(row,1).text() != 'N/A':
             ssh = ComunicationSSH()
-            request = ssh.backup(nombre,self.table.item(row,1).text(),"M5")
+            tecno = 'AIRMAX' if not 'AC' in self.table.item(row,7).text() else 'AC'
+            request = ssh.backup(nombre,self.table.item(row,1).text(),tecno)
         if request:
             nombre = self.table.item(row,0).text()
             DialogSuccess(self,f"Backup de: {nombre.title()}, con exito!!!").exec()
         else:
             DialogError(self,f"No se ha podido realizar el Backup al Usuario: {nombre.title()}").exec()
+    
+    def sortColumn(self, column):
+        # Lista de columnas que pueden ser ordenadas
+        sortable_columns = [4,5,6]  # Por ejemplo, solo columna 0 y 1 son ordenables
+
+        if column in sortable_columns:
+            order = self.table.horizontalHeader().sortIndicatorOrder()
+            self.table.sortItems(column, order)
+        else:
+            # Ignora la ordenación en esta columna
+            pass

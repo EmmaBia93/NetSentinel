@@ -158,7 +158,7 @@ class MainWindow(QMainWindow):
         
         # Tabla de paneles
         self.table = QTableWidget()
-
+        self.table.setFocusPolicy(Qt.NoFocus)
         self.table.setColumnCount(8)
         self.table.verticalHeader().setVisible(False)
         self.table.setHorizontalHeaderLabels(["Nombre", "IP", "Tiempo", "Clientes", "LAN", "Hz","Tec","Estado"])
@@ -320,7 +320,7 @@ class MainWindow(QMainWindow):
         selected_row = self.table.currentRow()
     
         
-        if column==0 and self.current_device=="Panel":
+        if column==0 and self.current_device=="Panel" and self.table.item(row,7).text()=="Online":
             
             user_table = UserTable(self.table.item(row,0).text(),self.table.item(row, 1).text(),self.table.item(row, 6).text(),self)
             user_table.exec()

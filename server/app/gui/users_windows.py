@@ -12,7 +12,7 @@ from tkinter.filedialog import askdirectory
 from PySide6.QtCore import Qt, QThread, Signal, Slot
 import time
 import pyperclip
-
+import re
 
 class ProgressDialog(QDialog):
     def __init__(self, parent=None):
@@ -97,17 +97,26 @@ class UserTable(QDialog):
 
         # Frame para la barra de búsqueda y los botones
         top_frame = QWidget()
+        
+        top_frame.setStyleSheet("""
+            QWidget {
+                border: 2px solid #2e86c1;
+                border-radius: 10px;
+                padding: 10px;
+            }
+        """)
         top_layout = QHBoxLayout(top_frame)
-
         # Barra de búsqueda
         self.search_bar = QLineEdit(self)
         self.search_bar.setPlaceholderText("Buscar por nombre...")
         self.search_bar.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.search_bar.setFixedWidth(500)
         
+        
         self.search_bar.textChanged.connect(self.filter_table)
         top_layout.addWidget(self.search_bar)
-        self.search_bar.clearFocus()
+        
+        
         # Botones
         backup_button = QPushButton("Respaldar Información")
         backup_button.setStyleSheet("""
@@ -182,16 +191,19 @@ class UserTable(QDialog):
 
         # Configurar la tabla
         self.table = QTableWidget()
+        
         self.table.verticalHeader().setVisible(False)
-        self.table.setColumnCount(8)
-        self.table.setHorizontalHeaderLabels(["Nombre", "IP", "Frecuencia", "Cable", "Señal", "CCQ", 'Distancia','Modelo'])
-        self.table.horizontalHeader().setSectionResizeMode(7, QHeaderView.Stretch)
+        self.table.setColumnCount(9)
+        self.table.setHorizontalHeaderLabels(["Nombre", "IP", "Frecuencia", "Cable", "Señal", "CCQ", 'Distancia','Activo','Modelo'])
+        self.table.horizontalHeader().setSectionResizeMode(8, QHeaderView.Stretch)
         self.table.setColumnWidth(0, 320)
         self.table.setColumnWidth(1, 200)
-        self.table.setColumnWidth(2, 200)
+        self.table.setColumnWidth(2, 150)
         self.table.setColumnWidth(3, 100)
         self.table.setColumnWidth(4, 100)
         self.table.setColumnWidth(5, 100)
+        self.table.setColumnWidth(6, 120)
+        self.table.setColumnWidth(7, 200)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.cellDoubleClicked.connect(self.event_double)
@@ -237,7 +249,9 @@ class UserTable(QDialog):
                             """)
         close_button.clicked.connect(self.accept)  
         main_layout.addWidget(close_button, alignment=Qt.AlignBottom)
-        self.table.setFocus()
+        
+        self.table.setFocusPolicy(Qt.NoFocus)
+        self.setFocus()
         
         # Ejecutar la carga de datos en un hilo separado
         threading.Thread(target=self.load_datatable, args=(ip, tecnologia)).start()
@@ -266,7 +280,8 @@ class UserTable(QDialog):
             self.set_table_item(row, 4, user['signal'])
             self.set_table_item(row, 5, user['ccq'])
             self.set_table_item(row, 6, user['distance'])
-            self.set_table_item(row, 7, user['platform'])
+            self.set_table_item(row, 7, user['uptime'])
+            self.set_table_item(row, 8, user['platform'])
             
 
 
@@ -274,72 +289,96 @@ class UserTable(QDialog):
         self.progress_bar.setVisible(False)
 
     def set_table_item(self, row, column, text):
-        text=str(text)
-        dic_colors = {'enabled':'#d35400','Desconocido':'#506fad','disabled':'#2ecc71','Desconectado':'#e74c3c','10':'#e74c3c','100':'#2ecc71'}
+        text = str(text)
+        dic_colors = {
+            'enabled': '#d35400', 'Desconocido': '#506fad',
+            'disabled': '#2ecc71', 'Desconectado': '#e74c3c',
+            '10': '#e74c3c', '100': '#2ecc71'
+        }
+
         item = QTableWidgetItem(text)
         item.setTextAlignment(Qt.AlignCenter)
         item.setFlags(item.flags() & ~Qt.ItemIsEditable)
-        icon = QIcon()
-        if column==1 and text == 'N/A':
-            item.setForeground(QBrush(QColor("#e74c3c")))
-            
+
+        def set_color(color):
+            item.setForeground(QBrush(QColor(color)))
+
         
-        if column == 2 or column == 3:
-            item.setForeground(QBrush(QColor(dic_colors[text])))
-            
-        if column == 4:
-            if int(text) < 68:
-                item.setForeground(QBrush(QColor("#2ecc71")))
-            elif 68 <= int(text) <= 77:
-                item.setForeground(QBrush(QColor("#f1c40f")))
-            else: 
-               item.setForeground(QBrush(QColor("#e74c3c"))) 
-        
-        
-        if column == 5:
-            if int(text) >= 75:
-                item.setForeground(QBrush(QColor("#2ecc71")))
-            elif 60 <= int(text) <= 74:
-                item.setForeground(QBrush(QColor("#f1c40f")))
-            else: 
-               item.setForeground(QBrush(QColor("#e74c3c"))) 
-        
-        if column == 6:
-            distancia = float(text.replace("km", "").strip())
-            if distancia <= 2.0:
-                item.setForeground(QBrush(QColor("#2ecc71")))
-            elif distancia > 2.0 and distancia<=3.0:
-                item.setForeground(QBrush(QColor("#f1c40f")))
+        color_mapping = {
+            0: lambda: set_color("#dedede"),
+            1: lambda: set_color("#e74c3c") if text == 'N/A' else None,
+            2: lambda: set_color(dic_colors.get(text, "#000000")),
+            3: lambda: set_color(dic_colors.get(text, "#000000")),
+            4: lambda: set_color("#2ecc71") if int(text) < 68 else set_color("#f1c40f") if int(text) <= 77 else set_color("#e74c3c"),
+            5: lambda: set_color("#2ecc71") if int(text) >= 75 else set_color("#f1c40f") if int(text) >= 60 else set_color("#e74c3c"),
+            6: lambda: set_color("#2ecc71") if float(text.replace("km", "").strip()) <= 2.0 else set_color("#f1c40f") if float(text.replace("km", "").strip()) <= 3.0 else set_color("#e74c3c"),
+            7: lambda: process_days_column(text),
+            8: lambda: set_color("#82a7f5")
+        }
+
+        def process_days_column(text):
+            match = re.match(r'(\d+)\sdía[s]?\s\d{2}:\d{2}:\d{2}', text)
+            if match:
+                days = int(match.group(1))
+                if days < 15:
+                    set_color("#2ecc71")
+                elif 15 <= days <= 25:
+                    set_color("#f1c40f")
+                else:
+                    set_color("#e74c3c")
             else:
-                item.setForeground(QBrush(QColor("#e74c3c")))
-        if column == 0:
-            item.setForeground(QBrush(QColor("#dedede")))
-        
-        if column == 7:
-            item.setForeground(QBrush(QColor("#3c3cff")))
-            
+                set_color("#2ecc71")
+
+        color_mapping.get(column, lambda: None)()
+
         self.table.setItem(row, column, item)
-    
-    def event_double(self,row,column):
-        selected_row = self.table.currentRow()
-        if column==0:
-            pyperclip.copy(self.response[row]['mac'])
-        if column==1 and self.table.item(row, 1).text() != 'N/A':
-            data = self.table.item(row, 1).text()
+
+
+    def event_double(self, row, column):
+        def open_url(data):
             url = f"http://{data}:83"
             webbrowser.open(url)
-        if column==2 and self.table.item(row, 2).text() == 'enabled':
-            ssh = ComunicationSSH()
+        
+        def show_dialog(dialog_type, message):
+            dialog = dialog_type(self, message)
+            dialog.exec()
+        
+        def handle_mac_column():
+            pyperclip.copy(self.response[row]['mac'])
+        
+        def handle_ip_column():
+            data = self.table.item(row, 1).text()
+            if data != 'N/A':
+                open_url(data)
+        
+        def handle_status_column():
+            status = self.table.item(row, 2).text()
             ip = self.table.item(row, 1).text()
-            response = ssh.desmarcar_frecuencia(ip=ip)
-            if response:
-                DialogSuccess(self,"Se ha desmarcado la frecuencia con exito!!!").exec()
-            else:
-                DialogError(self,"No se ha podido desmarcar la frecuencia").exec()
-        elif column==2 and self.table.item(row, 2).text() == 'disabled':
-            DialogError(self,"Ya esta desmarcada la frecuencia").exec()
+            ssh = ComunicationSSH()
 
-    
+            if status == 'enabled':
+                response = ssh.desmarcar_frecuencia(ip=ip)
+                if response:
+                    show_dialog(DialogSuccess, "Se ha desmarcado la frecuencia con éxito!!!")
+                else:
+                    show_dialog(DialogError, "No se ha podido desmarcar la frecuencia")
+            elif status == 'disabled':
+                show_dialog(DialogError, "Ya está desmarcada la frecuencia")
+        
+        
+        column_actions = {
+            0: handle_mac_column,
+            1: handle_ip_column,
+            2: handle_status_column
+        }
+
+        
+        action = column_actions.get(column)
+        if action:
+            action()
+
+
+        
         
     
     def restart_all_users(self):

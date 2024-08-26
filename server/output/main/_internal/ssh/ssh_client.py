@@ -6,9 +6,10 @@ import concurrent.futures
 from dotenv import load_dotenv
 from tkinter.filedialog import askdirectory
 from app.ssh.tools_aux import cantidad_horas_activo
-import re
-import random
 import time
+import json
+import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 class ComunicationSSH:
     
         
@@ -179,133 +180,7 @@ class ComunicationSSH:
         
         return results
                 
-            
-    def stations_users(self,ip,tecno):
-        load_dotenv()
-        
-        command = "wstalist | grep 'lastip' | awk '{print $2}' | sed 's/\"/ /g' | sed 's/,//g' | xargs echo -n | tr ' ' ','"
 
-
-        client = None
-        try:
-            if tecno != 'AC':
-                client = self.__create_ssh_client(ip, os.getenv('PORT'), os.getenv('UBNT'), os.getenv('PASS_AIRMAX'))
-            else:
-                client = self.__create_ssh_client(ip, os.getenv('PORT'), os.getenv('UBNT'), os.getenv('PASS_AC'))
-
-            
-           
-            if client:
-                
-                stdin, stdout, stderr = client.exec_command(command=command, timeout=3)
-                
-                output = stdout.read().decode("utf-8").strip()
-                error = stderr.read().decode("utf-8").strip()
-               
-                # Verificar estado de ejecución del comando
-                code_status = stdout.channel.recv_exit_status()
-                
-                if code_status == 0:
-                    result = output.split(",")
-                    
-                    return result
-            else:
-                print("Failed to create SSH client.")
-                return None
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            return None
-        finally:
-            client.close()
- 
-    def connect_with_fallback(self,ip, username, passwords):
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        
-        for password in passwords:
-            try:
-                ssh.connect(ip, username=username, password=password,port=os.getenv('PORT'))
-                return ssh  # Devuelve la conexión SSH exitosa
-            except paramiko.AuthenticationException:
-                print(f"Autenticación fallida para {ip} con la contraseña {password}")
-            except Exception as e:
-                print(f"Error al conectar con {ip}: {e}")
-                break  # Sal del bucle si ocurre un error diferente
-        return None  # Devuelve None si todas las conexiones fallan
-    
-    
-    def request_info_with_fallback(self,ip):
-        load_dotenv()
-        username=os.getenv('UBNT')
-        passwords=[os.getenv('PASS_AIRMAX'),os.getenv('PASS_AC')]
-        ssh = self.connect_with_fallback(ip, username, passwords)
-      
-        
-        if ssh is None:
-            return ip, "No se pudo autenticar con ninguna contraseña"
-        
-        try:
-            comando = """
-                        mca-status | grep 'deviceName=' | awk -F ',' '{print $1}' | sed 's/M5//g; s/M2//g; s/ AC//g' | cut -c 12-;
-                        cat /tmp/system.cfg | grep 'wireless.1.scan_list.status' | cut -c 29-;
-                        mca-status | grep 'lanSpeed=' | sed 's/[^0-9]//g';
-                        mca-status | grep signal | cut -c 9-;
-                        mca-status | grep ccq= | cut -c 5- | awk '{print $1/10}'
-                        mca-status | grep distance | awk -F '=' '{print $2}'
-                        """
-            stdin, stdout, stderr = ssh.exec_command(comando)
-
-            
-            output = stdout.read().decode('utf-8').strip().split('\n')
-
-            
-            userName = output[0]
-            scanStatus = output[1]
-            lanSpeed = output[2]
-            signal = output[3]
-            ccq = f"{float(output[4]):.0f}"
-            distance = f"{int(output[5])/1000:.1f} km"
-            
-
-
-
-            
-            output = f"{userName},{scanStatus},{lanSpeed},{ip},{signal},{ccq},{distance}"
-            return output
-        
-        except TimeoutError as e:
-            print(f"SSH connection timeout error: {e}")
-        except paramiko.SSHException as e:
-            print(f"SSH connection error: {e}")
-            raise
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
-
-        finally:
-            ssh.close()
-    
-    
-    
-    def request_users(self,ip,tecnologia):
-        ips=self.stations_users(ip,tecnologia)
-        results = []
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=len(ips)) as executor:
-            futures = {executor.submit(self.request_info_with_fallback, ip): ip for ip in ips}
-
-            for future in concurrent.futures.as_completed(futures):
-                ip = futures[future]
-                try:
-                    data = future.result()
-                    split_text = data.split(",")
-                    username,check_frec,lan,ip_user,signal,ccq,distance = split_text[0],split_text[1],split_text[2],split_text[3],split_text[4],split_text[5],split_text[6]
-                    
-                    results.append({'name':username,'ip':ip_user,'frequency':check_frec,'speed':lan,'signal':signal,'ccq':ccq,'distance':distance})
-                except Exception as exc:
-                    print(f'IP {ip} generated an exception: {exc}')
-        
-        return results
-    
     def desmarcar_frecuencia(self,ip):
         load_dotenv()
         ssh = self.__create_ssh_client(ip=ip,port=os.getenv('PORT'),username=os.getenv('UBNT'),password=os.getenv('PASS_AIRMAX'))
@@ -332,6 +207,88 @@ class ComunicationSSH:
             finally:
                 ssh.close()
 
-    def test(self,ip):
-        time.sleep(1)
-        return random.choice([True,False])
+
+    def request_client(self,ip,tecno):
+        load_dotenv()
+        port = os.getenv('PORT')
+        user = os.getenv('UBNT')
+        results = []
+        command = "wstalist"
+
+        if tecno != "AC":
+            password = os.getenv('PASS_AIRMAX')
+        else:
+            password = os.getenv('PASS_AC')
+        
+        client = self.__create_ssh_client(ip=ip,port=port,username=user,password=password)
+        stdin, stdout, stderr = client.exec_command(command=command)
+        output = stdout.read().decode("utf-8").strip()
+        output = json.loads(output)
+
+        def fetch_additional_info(client_ip,password_client,tecno_client):
+            
+            client = self.__create_ssh_client(client_ip, os.getenv('PORT'), os.getenv('UBNT'), password_client)
+            if client:
+                if tecno_client != 'AC':
+                    command_f = "cat /tmp/system.cfg | grep -o 'wireless.1.scan_list.status=[^,]*' |awk -F '=' '{print $2}'"
+                else:
+                    command_f ="cat /tmp/system.cfg | grep -o 'radio.1.scan_list.status=[^,]*' | awk -F '=' '{print $2}'"
+                stdin, stdout, stderr = client.exec_command(command=command_f, timeout=3)
+                return stdout.read().decode("utf-8").strip()
+            return "Desconocido"
+        
+        futures = {}
+
+        with ThreadPoolExecutor() as executor:
+            
+            
+            for current in output:
+                ip_address = current.get('lastip', '')
+
+                name = re.sub(r'\b(M2|M5|AC)\b|\B(M2|M5)', '', current.get('remote', {}).get('hostname', '')).strip() or '-'
+                
+                distance = f"{int(current.get('remote', {}).get('distance', 0)) / 1000:.1f} km"
+                
+                signal = str(current.get('remote', {}).get('signal', '0')).replace('-', '')
+                
+                lan = current.get('remote', {}).get('ethlist', [{'speed': '10'}])[0].get('speed', '10')
+                
+                mac = current.get('mac', '')
+                
+                platform = current.get('remote', {}).get('platform', 'Demasiado Vieja')
+                
+                ccq = current.get('ccq', '100')
+                
+                uptime = current.get('remote', {}).get('uptime', '0')
+                
+                if ip_address != "0.0.0.0":
+                    password_client = os.getenv('PASS_AIRMAX') if not '5AC' in platform else os.getenv('PASS_AC')
+                    tecno_client = 'AIRMAX' if not '5AC' in platform else 'AC'
+                    future = executor.submit(fetch_additional_info, ip_address,password_client,tecno_client)
+                    futures[future] = current
+                
+                results.append({
+                    'name': name,
+                    'ip': ip_address if ip_address != "0.0.0.0" else "N/A",
+                    'frequency': 'Desconocido',  # Inicialmente desconocido
+                    'speed': lan,
+                    'signal': signal,
+                    'ccq': ccq,
+                    'distance': distance,
+                    'mac': mac,
+                    'platform': platform,
+                    'uptime':cantidad_horas_activo(int(uptime))
+                })
+        
+        for future in as_completed(futures):
+            current = futures[future]
+            try:
+                frequency = future.result()
+                # Encuentra el diccionario correspondiente y actualiza la frecuencia
+                for result in results:
+                    if result['mac'] == current['mac']:
+                        result['frequency'] = frequency if frequency else "Desconocido"
+            except Exception as exc:
+                print(f'Error al obtener frecuencia para {current["mac"]}: {exc}')
+    
+        return results
