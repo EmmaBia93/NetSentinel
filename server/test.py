@@ -35,11 +35,11 @@ except Exception as e:
 
 try:
 
-    client = __create_ssh_client("10.104.1.102",os.getenv('PORT'),os.getenv('UBNT'),os.getenv('PASS_AIRMAX'))
-    with SCPClient(client.get_transport()) as scp:
-        scp.put(new_file_path, '/tmp/fwupdate.bin')
-        sleep(3)
-        client.exec_command("/sbin/fwupdate -m")
+    #client = __create_ssh_client("10.110.0.65",os.getenv('PORT'),os.getenv('UBNT'),os.getenv('PASS_AIRMAX'))
+    # with SCPClient(client.get_transport()) as scp:
+    #     scp.put(new_file_path, '/tmp/fwupdate.bin')
+    #     sleep(3)
+    #     client.exec_command("/sbin/fwupdate -m")
 except SCPException as e:
     print(f"Error al transferir el archivo: {e}")
 except Exception as e:
@@ -47,3 +47,6 @@ except Exception as e:
 finally:
     # Cerrar la conexión SSH
     client.close()
+
+
+ 

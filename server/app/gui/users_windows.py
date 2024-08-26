@@ -195,6 +195,7 @@ class UserTable(QDialog):
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.cellDoubleClicked.connect(self.event_double)
+        self.table.horizontalHeader().sectionClicked.connect(self.sortColumn)
         main_layout.addWidget(self.table)
 
         # Agregar barra de progreso
@@ -251,12 +252,10 @@ class UserTable(QDialog):
 
     def load_datatable(self, ip, tecnologia):
         ssh = ComunicationSSH()
-        if tecnologia != "AC":
-            self.response = ssh.request_users(ip)
-            self.table.setRowCount(len(self.response))
-        else:
-            self.response = ssh.request_users_AC(ip)
-            self.table.setRowCount(len(self.response))
+        
+        self.response = ssh.request_client(ip,tecnologia)
+        self.table.setRowCount(len(self.response))
+        
         
         # Rellenar la tabla con datos de SSH
         for row, user in enumerate(self.response):
@@ -281,7 +280,7 @@ class UserTable(QDialog):
         item.setTextAlignment(Qt.AlignCenter)
         item.setFlags(item.flags() & ~Qt.ItemIsEditable)
         icon = QIcon()
-        if column==1 and text == 'Desconocido(no AC)':
+        if column==1 and text == 'N/A':
             item.setForeground(QBrush(QColor("#e74c3c")))
             
         
@@ -325,7 +324,7 @@ class UserTable(QDialog):
         selected_row = self.table.currentRow()
         if column==0:
             pyperclip.copy(self.response[row]['mac'])
-        if column==1 and self.table.item(row, 1).text() != 'Desconocido(no AC)':
+        if column==1 and self.table.item(row, 1).text() != 'N/A':
             data = self.table.item(row, 1).text()
             url = f"http://{data}:83"
             webbrowser.open(url)
@@ -358,8 +357,11 @@ class UserTable(QDialog):
             user_name = self.table.item(row, 0).text()
             user_ip = self.table.item(row, 1).text()
             self.progress_dialog.update_user(user_name)
-            request = ssh.reboot(user_ip, "M5")
-            #request  = ssh.test(user_ip)
+            if self.table.item(row,1).text() != 'N/A':
+                tecno = 'AIRMAX' if not 'AC' in self.table.item(row,7).text() else 'AC'
+                request = ssh.reboot(user_ip, tecno)
+            else:
+                pass
                
             
 
@@ -397,10 +399,11 @@ class UserTable(QDialog):
     
     def restart_selected_user(self):
         row = self.table.currentRow()
-        if row > 0:
+        if row > 0 and self.table.item(row,1).text() != 'N/A':
             nombre = self.table.item(row,0).text()
+            tecno = 'AIRMAX' if not 'AC' in self.table.item(row,7).text() else 'AC'
             ssh = ComunicationSSH()
-            request = ssh.reboot(self.table.item(row,1).text(),"M5")
+            request = ssh.reboot(self.table.item(row,1).text(),tecno)
         if request:
             
             DialogSuccess(self,f"Se ha reiniciado al Usuario: {nombre.title()}, con exito!!!").exec()
@@ -410,11 +413,24 @@ class UserTable(QDialog):
     def backup_user(self):
         row = self.table.currentRow()
         nombre = self.table.item(row,0).text()
-        if row >0:
+        
+        if row >0 and self.table.item(row,1).text() != 'N/A':
             ssh = ComunicationSSH()
-            request = ssh.backup(nombre,self.table.item(row,1).text(),"M5")
+            tecno = 'AIRMAX' if not 'AC' in self.table.item(row,7).text() else 'AC'
+            request = ssh.backup(nombre,self.table.item(row,1).text(),tecno)
         if request:
             nombre = self.table.item(row,0).text()
             DialogSuccess(self,f"Backup de: {nombre.title()}, con exito!!!").exec()
         else:
             DialogError(self,f"No se ha podido realizar el Backup al Usuario: {nombre.title()}").exec()
+    
+    def sortColumn(self, column):
+        # Lista de columnas que pueden ser ordenadas
+        sortable_columns = [4,5,6]  # Por ejemplo, solo columna 0 y 1 son ordenables
+
+        if column in sortable_columns:
+            order = self.table.horizontalHeader().sortIndicatorOrder()
+            self.table.sortItems(column, order)
+        else:
+            # Ignora la ordenación en esta columna
+            pass
